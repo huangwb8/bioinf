@@ -1,0 +1,25 @@
+## function: samtools_index
+
+## Description
+# 为bam文件制作index
+
+## Parameters
+ws=$1
+path_bam=${ws}/output/align
+path_log=${ws}/log/samtools_index
+nthread=48
+
+## Example
+# nohup samtools_index ./align 6 &
+
+## Programe
+# log dir
+mkdir -p $path_log
+
+# cycle
+ls $path_bam | grep "bam$"| while read id
+do
+nohup samtools index -@ $nthread $path_bam/$id > $path_log/${id}_samtools_index.log 2>&1 &
+done
+
+# End samtools_index

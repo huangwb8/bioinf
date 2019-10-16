@@ -1,0 +1,66 @@
+## function : homer_motif
+
+## Description:
+# 通过homer软件，对.bed文件进行peak motif的寻找及peak注释。此程序中，findMotifsGenome步骤是限速步骤。
+
+## Usage
+# nohup homer_motif $ws > $ws/log/homer_motif.log 2>&1 &
+# cat $ws/log/homer_motif.log
+# tail -f $ws/log/homer_motif/*.log
+
+## Parameters
+ws=$1
+path_log=$ws/log/homer_motif
+path_bed=$ws/output/peaks
+path_homer=/data/reference/homer/bin #homer安装位置
+path_res=$ws/output/homer_motif
+findMotifsGenome=$path_homer/findMotifsGenome.pl
+annotatePeaks=$path_homer/annotatePeaks.pl
+genome=/data/reference/homer/data/genomes/mm9 #homer基因组所在文件夹。
+mkdir -p $path_log $path_res
+
+# parameter report
+echo "homer_motif by Weibin Huang" `date`
+echo "path_log=$path_log"
+echo "path_bed=$path_bed"
+echo "genome=$genome"
+
+## Programe
+ls $path_bed | grep "bed$" | while read id
+do
+  # id=H2Aub1.ChIPSeq-GSM850471.merge.rmdup_summits.bed
+  echo "${id}"
+  case=$(basename ${id} ".bed")
+  awk '{print $4"\t"$1"\t"$2"\t"$3"\t+"}' $path_bed/$id > $path_bed/homer_peaks.tmp
+  
+  # findMotifsGenome寻找富集Motifs
+  if [ ! -d $path_res/${case}_motifDir ]; then
+    echo "findMotifsGenome: ${case}..."
+    nohup time $findMotifsGenome \
+    $path_bed/homer_peaks.tmp \
+    $genome \
+    $path_res/${case}_motifDir \
+    -len 8,10,12 \
+    > $path_log/findMotifsGenome_${case}.log 2>&1 &
+    echo "findMotifsGenome: done!"
+  else 
+    echo "homer_motif findMotifsGenome: ${case} had existed! Ignore it"
+  fi
+
+  # annotatePeaks对Peaks进行注释
+  if [ ! -f $path_res/${case}_peakAnn.xls ]; then 
+    echo "annotatePeaks: ${case}..."
+    nohup time $annotatePeaks \
+    $path_bed/homer_peaks.tmp \
+    $genome \
+    1>$path_res/${case}_peakAnn.xls \
+    2>$path_res/${case}_annLog.txt &
+    echo "annotatePeaks: done!"
+  else 
+    echo "homer_motif annotatePeaks: ${case} had existed! Ignore it"
+  fi
+done
+## file management
+rm $path_bed/homer_peaks.tmp
+echo "All done!"
+## End homer_motif

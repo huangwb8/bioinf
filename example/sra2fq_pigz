@@ -1,0 +1,49 @@
+## function: sra2fq_pigz
+
+# Usage:
+# nohup sra2fq_pigz $ws > $ws/log/sra2fq/sra2fq_pigz.log 2>&1 &
+# tail -f $ws/log/sra2fq/*pigz.log
+
+# Description
+# 将sra转换成fastq.gz
+
+# Parameters:
+ws=$1 #wp=/home/huangwb8/Test/wes_1
+path_sra2fq_txt=${ws}/input/case/sra2case.txt
+path_fastq=${ws}/output/fastq
+path_log=${ws}/log/sra2fq
+nthread=48
+
+# Setting
+# x=sra2fq;sudo chmod 777 $ws/bin/$x;cat $ws/bin/$x
+
+# create space 
+mkdir -p {${path_fastq},${path_log}}
+
+# sra2fastq
+cat ${path_sra2fq_txt} | while read id
+do
+  arr=(${id})
+  sample=${arr[0]}.sra # sample=SRR3182421.sra
+  case=${arr[1]} # case=case3_germline
+  
+  ## 检测是双端/单端测序数据
+  if [ -f ${path_fastq}/${sample}_1.fastq -a -f ${path_fastq}/${sample}_2.fastq ]
+  then # 双端
+  echo "${path_fastq}/${sample}: paired data."
+  echo "${path_fastq}/${sample}: do pigz..."
+  mv ${path_fastq}/${sample}_1.fastq ${path_fastq}/${case}_1.fastq
+  pigz -p ${nthread} ${path_fastq}/${case}_1.fastq	
+  #sed s/${sample}/${case}/ ${path_fastq}/${sample}_2.fastq > ${path_fastq}/${case}_2.fastq
+  mv ${path_fastq}/${sample}_2.fastq ${path_fastq}/${case}_2.fastq
+  pigz -p ${nthread} ${path_fastq}/${case}_2.fastq
+  echo "${path_fastq}/${sample}: done!"
+  else # 单端
+  echo "${path_fastq}/${sample}: single data."
+  echo "${path_fastq}/${sample}: do pigz..."
+  mv ${path_fastq}/${sample}.fastq ${path_fastq}/${case}.fastq
+  pigz -p ${nthread} ${path_fastq}/${case}.fastq
+  echo "${path_fastq}/${sample}: done!"
+  fi
+done
+# End sra2fq_pigz

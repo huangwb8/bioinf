@@ -1,0 +1,30 @@
+
+# Program:
+#  do some trim_galore cleaning.
+# History:
+# 2019/09/21 Weibin Huang; First release
+# Parameters:
+# 1: full path of a .txt file with first col as sample id, and the second col as case name
+# 2: path of .fastq.gz
+
+echo "Parameters:"
+echo "1: full path of a .txt file with first col as sample id, and the second col as case name"
+echo "2: path of .fastq.gz"
+
+PATH=$PATH:~/bin
+export PATH
+
+## mkdir 
+mkdir -p ./clean-trim_galore
+
+## read id
+cat $1 | while read id
+do
+  arr=(${id})
+  case=${arr[1]}
+  fq1=${case}_1.fastq.gz
+  fq2=${case}_2.fastq.gz
+  
+  ## 一般Illumina在1.9以上的都用phred33; length主要看原本测序序列的长度。如果太短（比如RNA-seq中的片段通常只有60多bp），此时length的值应该要偏低些；core是线程，但不知何故它推荐不要超过8。
+  trim_galore  --paired -q 28 --phred33 --length 30 --stringency 3 --gzip --cores 8 -o ./clean-trim_galore $2/$fq1 $2/$fq2 >> ./clean-trim_galore/trimgalore.log 2>&1
+done

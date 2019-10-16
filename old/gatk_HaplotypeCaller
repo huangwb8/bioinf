@@ -1,0 +1,36 @@
+## function gatk_HaplotypeCaller
+# value
+# path_bam=./align
+path_bam=$1
+GATK=/home/huangwb8/Downloads/conda/location/envs/bioinf/bin/gatk # which gatk
+path_genome=/data/reference/genome/hg38
+path_bwa=/data/reference/index/bwa/hg38
+
+# setting
+# x=gatk_HaplotypeCaller;sudo chmod 777 ~/bin/$x;cat ~/bin/$x
+
+# Parameters
+# $1: the path of .bam
+
+# Programe
+# log management
+mkdir -p $path_bam/log/gatk_HaplotypeCaller
+# cycle: 生成 vcf
+ls $path_bam | grep '_marked_addRG.bam$' | head -n 1 |while read id 
+do 
+log_i=$path_bam/log/gatk_HaplotypeCaller/${id}_gatk_HaplotypeCaller.log
+touch $log_i
+
+# 生成gvcf中间文件
+echo "Note: HaplotypeCaller"
+time $GATK HaplotypeCaller -R $path_genome/hg38.fa --emit-ref-confidence GVCF -I $path_bam/$id -O $path_bam/$(basename ${id} _marked.bam).g.vcf
+
+# 通过gvcf检测变异
+echo "Note: GenotypeGVCFs"
+time $GATK GenotypeGVCFs -R $path_genome/hg38.fa -V $path_bam/$(basename ${id} _marked.bam).g.vcf -O $path_bam/$(basename ${id} _marked.bam).vcf
+
+# 用bgzip对VCF进行压缩，并用tabix为它构建索引(tbi)
+time bgzip -f $path_bam/$(basename ${id} _marked.bam).vcf
+time tabix -p vcf $path_bam/$(basename ${id} _marked.bam).vcf.gz
+done
+# End function: gatk_HaplotypeCaller

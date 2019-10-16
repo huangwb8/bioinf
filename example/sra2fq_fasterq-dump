@@ -1,0 +1,40 @@
+## function: sra2fq_fasterq-dump
+
+# Usage:
+# cd $ws/input/sra;nohup sra2fq_fasterq-dump $ws & # 由于scratch-path的原因，一定要在.sra的子目录下才可以成功
+
+# Description
+# 将sra转换成fastq.gz
+
+# Parameters:
+ws=$1 #wp=/home/huangwb8/Test/wes_1
+path_sra2fq_txt=${ws}/input/case/sra2case.txt
+path_sra=${ws}/input/sra
+path_fastq=${ws}/output/fastq
+path_log=${ws}/log/sra2fq
+nthread=48
+
+# Setting
+# x=sra2fq;sudo chmod 777 $ws/bin/$x;cat $ws/bin/$x
+
+# create space 
+mkdir -p {${path_fastq},${path_log}}
+
+# sra2fastq
+cat ${path_sra2fq_txt} | while read id
+do
+  arr=(${id})
+  sample=${arr[0]}.sra # sample=SRR3182421.sra
+  case=${arr[1]} # case=case3_germline
+  if [ -f ${path_sra}/${sample} ]; then
+  touch ${path_log}/sra2fq_${case}.log
+  ## -p show progress; -x print details; -3 writes single reads in special file;-N use row-id as name; -P print read-numbers; -f force to overwrite existing file(s)，这里不加;-e how many thread; --skip-technical skip technical reads
+  echo "${path_sra}/${sample}: do fasterq-dump..."
+  nohup time fasterq-dump -p -x -3 -N -P --skip-technical -e ${nthread} ${path_sra}/${sample} -O ${path_fastq} > ${path_log}/sra2fq_fasterq-dump_${case}.log 2>&1 &
+  echo "${path_sra}/${sample}: done!"
+  else 
+  echo "${path_sra}/${sample} is not existed."
+  fi
+done
+echo "Done!"
+# End sra2fq_fasterq-dump

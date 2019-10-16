@@ -1,0 +1,76 @@
+## function: bowtie2_hg38
+
+## Description
+# 通过bowtie2算法，根据hg38基因组对*.fastq.gz进行比对。通过samtools sort进行排序。最终生成*.bam文件。
+
+## Parameters
+index_base=/data/reference/index/bowtie/hg38/hg38 # 注意这不是文件路径而是文件前缀
+ws=$1
+path_sra2fq_txt=${ws}/input/case/sra2case.txt
+path_fastq=${ws}/output/fastq
+path_log=${ws}/log/bowtie2_hg38
+path_align=${ws}/output/align
+path_genome_fa=/data/reference/genome/hg38/hg38.fa
+seq_type=Chip-Seq
+nthread=48
+
+## Usage
+# nohup bowtie2_hg38 $ws > $ws/log/bowtie2_hg38/bowtie2_hg38.log 2>&1 &
+# tail -f $ws/log/bwa_hg38/bwa_hg38.log
+
+## dir & log
+mkdir -p $path_log $path_align
+
+# cycle for bwa mem
+cat $path_sra2fq_txt | while read id 
+do
+    arr=(${id})
+    case=${arr[1]}
+    fq1=$path_fastq/${case}_1.fastq.gz
+    fq2=$path_fastq/${case}_2.fastq.gz
+    fq=$path_fastq/${case}.fastq.gz
+    
+    if [ -f $path_align/${case}.bam ]; then
+    echo `date`"$path_align/${case}.bam had existed."
+    elif [ -f $fq1 -a -f $fq2 -a]; then
+    
+    echo `date`"${case}: paired data. Do bowtie2 ..."
+    bowtie2 -p $nthread -x $index_base -U $fq1 $fq2 \
+    --rg-id "${case}" \
+    --rg "SM:${case}" \
+    --rg "LB:${seq_type}" \
+    --rg "PL:Illumina" \
+    -S $path_align/${case}.sam
+    echo `date`"${case}: bowtie2 done!"
+    
+    echo `date`"${case}: samtools view ..."
+    samtools view -@ $nthread -bhS -q 30 $path_align/${case}.sam >$path_align/${case}_nonsort.bam
+    echo `date`"${case}: samtools view done!"
+    
+    echo `date`"${case}: samtools sort ..."
+    samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam $path_align/${case}_nonsort.bam >$path_log/${case}.align_bowtie2_hg38.log 2>&1
+    echo `date`"${case}: samtools sort done!"
+    
+    else
+    echo `date`"${case}: unpaired data. Do bowtie2 ..."
+    bowtie2 -p $nthread -x $index_base -U $fq \
+    --rg-id "${case}" \
+    --rg "SM:${case}" \
+    --rg "LB:${seq_type}" \
+    --rg "PL:Illumina" \
+    -S $path_align/${case}.sam
+    echo `date`"${case}: bowtie2 done!"
+    
+    echo `date`"${case}: samtools view ..."
+    samtools view -@ $nthread -bhS -q 30 $path_align/${case}.sam >$path_align/${case}_nonsort.bam
+    echo `date`"${case}: samtools view done!"
+    
+    echo `date`"${case}: samtools sort ..."
+    samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam $path_align/${case}_nonsort.bam >$path_log/${case}.align_bowtie2_hg38.log 2>&1
+    echo `date`"${case}: samtools sort done!"
+    fi
+    
+    ## 删除多余的文件
+    rm $path_align/*.sam $path_align/*_nonsort.bam
+done
+# End bowtie2_hg38

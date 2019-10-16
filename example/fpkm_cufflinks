@@ -1,0 +1,50 @@
+## function: fpkm_cufflinks
+## Description:
+# 通过cufflinks对RNA-Seq实验的*.bam文件计算fpkm值。
+
+## Usage
+# nohup fpkm_cufflinks $ws > $ws/log/fpkm_cufflinks.log 2>&1 &
+# tail -f $ws/log/fpkm_cufflinks.log
+
+## Parameter
+ws=$1
+path_align=${ws}/output/align
+path_log=${ws}/log/fpkm_cufflinks
+path_res=${ws}/output/fpkm_cufflinks
+path_genome_gtf=/data/reference/gtf/raw/hg38_gencode.v32.annotation.gtf
+path_genome_fa=/data/reference/genome/hg38/hg38.fa
+nthread=48
+mkdir -p $path_res $path_log
+
+## Programe
+ls $path_align | grep '.bam$' | while read id
+#id=N052611-Albuterol.bam
+do
+  case=$(basename ${id} ".bam")
+  if [ ! -f $path_res/${case}/transcripts.gtf ]; then   
+  mkdir -p $path_res/${case}
+  echo `date`" ${case}: do fpkm_cufflinks ..."  
+  cufflinks -p $nthread \
+  -G $path_genome_gtf \
+  -o $path_res/${case} \
+  $path_align/$id \
+  > $path_log/fpkm_cufflinks_${case}.log 2>&1 
+  echo `date`" ${case}: done fpkm_cufflinks!"
+  else 
+  echo `date`" FPKM data of ${case} existed.Ignore!"
+  fi
+done
+
+## merge gtf
+echo "cuffmerge: merge multiple gtf files of every sample..."
+ls $path_res | while read i; do echo "${path_res}/${i}/transcripts.gtf" >> ${path_res}/temp.fpkm_cufflink.list; done
+cuffmerge -p $nthread \
+    -s $path_genome_fa \
+    -g $path_genome_gtf \
+    -o $path_res \
+    temp.fpkm_cufflink.list \
+    > $path_log/cuffmerge.log 2>&1
+echo "cuffmerge: done!"
+
+## End fpkm_cufflinks
+echo "All done! "

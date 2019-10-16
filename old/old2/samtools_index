@@ -1,0 +1,24 @@
+
+## function: samtools_index
+# $1 the path of .bam files
+# $2 the number of used thread 
+touch $1/samtools_index.log
+ls $1 | grep "bam$"| while read id 
+do 
+nohup samtools index -@ $2 $1/$id >> $1/samtools_index.log 2>&1 &
+done
+## End samtools_index
+
+# sudo chmod 777 ~/bin/samtools_index && dos2unix ~/bin/samtools_index
+# cat ~/bin/samtools_index
+
+# nohup samtools_index ./align 6 &
+
+
+
+
+
+
+
+
+

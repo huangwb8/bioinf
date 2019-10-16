@@ -1,0 +1,30 @@
+
+## function: gatk_markDuplicates
+
+## chmod & dos2unix 
+# x=gatk_markDuplicates && sudo chmod 777 ~/bin/$x && dos2unix ~/bin/$x && cat ~/bin/$x
+
+## Parameters: 
+# $1: the path of .bam
+# $2：the number of threads
+
+## Usage:
+# nohup gatk_markDuplicates ./align 48 > gatk_markDuplicates.log 2>&1 &
+# tail -f gatk_markDuplicates.log
+
+## function: gatk_markDuplicates
+GATK=/home/huangwb8/Downloads/conda/location/envs/bioinf/bin/gatk
+
+
+ls $1 | grep "bam$" | sed 's/.bam//g' | while read id
+do
+    BAM=$1/${id}.bam
+
+    if [ ! -f ${id}_marked.bam ]
+    then
+    echo "start MarkDuplicates for ${id}" `date`
+    $GATK MarkDuplicates --java-options "-Xmx60G -Djava.io.tmpdir=./" -I ${BAM} --REMOVE_DUPLICATES=true -O $1/${id}_marked.bam -M $1/${id}.metrics 1>$1/${id}_marked.log 2>&1 
+    echo "end MarkDuplicates for ${id}" `date`
+    samtools index -@ $2 -m 5G -b $1/${id}_marked.bam
+    fi
+done

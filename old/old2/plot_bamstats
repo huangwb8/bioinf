@@ -1,0 +1,17 @@
+## function: plot_bamstats
+# $1: the path of .stat files
+# cycle: plot-bamstats
+res=$1/plot-bamstats
+mkdir -p $res
+touch $res/plot-bamstats.log
+ls $1 | grep "stat$" | while read id
+do
+# -p后面接一个输出目录
+nohup plot-bamstats -p $res/$(basename ${id} .stat)/$(basename ${id} .stat) $1/${id} >> $res/plot-bamstats.log &
+done
+## End plot_bamstats
+
+
+# sudo chmod 777 ~/bin/plot_bamstats && dos2unix ~/bin/plot_bamstats
+
+# nohup plot_bamstats ./stat &

@@ -1,0 +1,40 @@
+## function: bwa_hg38
+## Parameters: 
+#  $1: full path of a .txt file with first col as sample id, and the second col as case name
+#  $2: path of .fq.gz
+#  $3: numeric;the number of threads 
+
+## Description
+# 通过bwa的mem算法，根据hg38基因组对*.fastq.gz进行比对。通过samtools sort进行排序。最终生成*.bam文件。
+
+## Usage
+# nohup bwa_hg38 $ws > $ws/log/bwa_hg38/bwa_hg38.log 2>&1 &
+
+## Programe
+index_base=/data/reference/index/bwa/hg38/hg38 # 注意这不是文件路径而是文件前缀
+ws=$1
+path_sra2fq_txt=${ws}/input/case/sra2case.txt
+path_fastq=${ws}/output/fastq
+path_log=${ws}/log/bwa_hg38
+path_align=${ws}/output/align
+path_genome_fa=/data/reference/genome/hg38/hg38.fa
+nthread=30
+
+## log
+mkdir -p $path_log $path_align
+
+# cycle for bwa mem
+cat $path_sra2fq_txt | while read id 
+do
+    arr=(${id})
+    case=${arr[1]}
+    fq1=$path_fastq/${case}_1_trim.fastq.gz
+    fq2=$path_fastq/${case}_2_trim.fastq.gz
+    echo $fq1
+    echo $fq2
+    # bwa mem: -t 线程数；-M mark shorter split hits as secondary？; 管道|后面的-代表管道前的输出;-R @RG对于下一步的GATK碱基质量重校正BQSR最佳实践是需要的。要事先检查一下@RG是否存在
+    # samtools sort: -m设定每个线程的最大内存
+time bwa mem -M -R "@RG\tID:${case}\tSM:${case}\tLB:WXS\tPL:Illumina" -t $nthread $index_base $fq1 $fq2 | samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam - > $path_log/bwa_hg38_${case}.log 2>&1
+
+done
+# End bwa_hg38

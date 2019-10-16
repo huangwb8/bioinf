@@ -1,0 +1,20 @@
+# function cut5_fastq
+
+# Description
+# cut some bps from 5' end
+
+# Parameters
+ws=$1
+path_fastq=$ws/output/fastq
+path_log=$ws/log/cut5_fastq
+
+# log
+mkdir -p $path_log
+
+# programe
+ls $path_fastq | grep "fastq.gz$" | while read id
+do
+echo "$path_fastq/$id"
+time cutadapt -u 5 -o ${path_fastq}/$(basename ${id} .fastq.gz)_trim.fastq.gz ${path_fastq}/${id} > $path_log/cut5_fastq_{$id}.log 2>&1 
+done
+# End cut5_fastq

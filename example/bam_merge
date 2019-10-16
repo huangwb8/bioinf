@@ -1,0 +1,55 @@
+## function: bam_merge
+
+## Description
+# merge .bam via specified rule
+
+## Usage
+# nohup bam_merge $ws &
+
+## Parameters
+ws=$1
+path_sra2fq_txt=${ws}/input/case/sra2case.txt
+path_bam=${ws}/output/align
+path_log=${ws}/log/bam_merge
+nsample=4 # 第几列是用于merge的sample id
+nthread=48
+
+## log
+mkdir -p $path_log
+
+## Programe:
+
+# create uniuqe sample id 
+cat $path_sra2fq_txt | cut -d' ' -f $nsample - | uniq - > $path_bam/temp_unique.sample
+
+# merge bam via one sample id
+cat temp_unique.sample | while read i
+do 
+  # create merge bam path
+  # i=GSM850467
+  touch $path_bam/temp_bamPath
+  cat ${path_sra2fq_txt} |grep $i| while read id; 
+  do 
+  arr=(${id})
+  bam=$path_bam/${arr[1]}.rmdup.bam # 按实际情况修改
+  echo "$bam" >> $path_bam/temp_bamPath
+  echo "Input: the bam files of $i-$bam"
+  done
+
+  # merge bam via "temp_bamPath"
+  echo "Merge .bam of $i..."
+  cat $path_bam/temp_bamPath | xargs samtools merge -@ $nthread $path_bam/${i}.merge.bam 
+  echo "Complete merge .bam of $i! Output: $path_bam/${i}.merge.bam"
+  
+  # create index for merge.bam
+  echo "samtools index for new merge bam..."
+  nohup samtools index -@ $nthread $path_bam/${i}.merge.bam > $path_log/${i}.merge_samtool_index.log 2>&1 &
+  
+  # rm temp files
+  rm $path_bam/temp_bamPath
+done  
+
+# rm temp files
+rm $path_bam/temp_unique.sample
+echo "Done!"
+## End bam_merge

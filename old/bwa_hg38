@@ -1,0 +1,27 @@
+## bwa_hg38.sh
+### Parameters: 
+##  $1: full path of a .txt file with first col as sample id, and the second col as case name
+##  $2: path of .fq.gz
+##  $3: numeric;the number of treads 
+
+## new dir
+mkdir -p ./align
+touch ./align/bwa_hg38.log
+
+## cycle for bwa mem
+cat $1 | while read id 
+do
+    arr=(${id})
+    case=${arr[1]}
+    fq1=$2/${case}_1_val_1.fq.gz
+    fq2=$2/${case}_2_val_2.fq.gz
+    echo $fq1
+    echo $fq2
+    # -t 线程数；-M mark shorter split hits as secondary？; 管道|后面的-代表管道前的输出;/data/reference/index/bwa/hg38/hg38指的是index的前缀
+   bwa mem -M -t $3 /data/reference/index/bwa/hg38/hg38 $fq1 $fq2 | samtools sort -@ $3 -m 1G --reference /data/reference/genome/hg38/hg38.fa -o ./align/${case}.bam - 
+done
+
+
+
+
+

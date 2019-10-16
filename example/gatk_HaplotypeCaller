@@ -1,0 +1,60 @@
+## function gatk_HaplotypeCaller
+# value
+ws=$1
+path_bam=$ws/output/align
+path_log=$ws/log/gatk_HaplotypeCaller
+GATK=/home/huangwb8/Downloads/conda/location/bin/gatk # which GATK4
+path_genome=/data/reference/genome/hg38
+bam_postfix="_marked_bqsr.bam"
+mkdir -p $path_log
+
+## Usage
+# mkdir -p $ws/log
+# nohup gatk_HaplotypeCaller $ws > $ws/log/gatk_HaplotypeCaller.log 2>&1 &
+# tail -f $ws/log/gatk_HaplotypeCaller/*.log
+
+## Programe
+
+# cycle: 生成 vcf
+ls $path_bam | grep ${bam_postfix} | while read id 
+do 
+  # id=case3_biorep_B_marked_bqsr.bam
+  base=$(basename ${id} ".bam")
+  # HaplotypeCaller: 生成gvcf中间文件。 210.55 minutes.
+  if [ ! -f $path_bam/$base.vcf ]; then 
+    echo `date`" ${base}: do HaplotypeCaller ..."
+    time $GATK HaplotypeCaller \
+    -R $path_genome/hg38.fa \
+    --emit-ref-confidence GVCF \
+    -I $path_bam/$id \
+    -O $path_bam/${base}.g.vcf \
+    > $path_log/${base}_HaplotypeCaller.log 2>&1 
+    echo `date`" ${base}: done HaplotypeCaller!" 
+
+    # GenotypeGVCFs: 通过gvcf检测变异。5.98 minutes
+    echo `date`"${base}: Note: GenotypeGVCFs"
+    time $GATK GenotypeGVCFs \
+    -R $path_genome/hg38.fa \
+    -V $path_bam/$base.g.vcf \
+    -O $path_bam/${base}.vcf \
+    > $path_log/${base}_GenotypeGVCFs.log 2>&1
+    echo `date`" ${base}: done GenotypeGVCFs!"
+    
+  else
+    echo `date`" ${base}.vcf existed. Ignore!"
+  fi
+    
+    # 用bgzip对VCF进行压缩，并用tabix为它构建索引(tbi)
+    echo `date`" ${base}: index..."
+    time bgzip -f $path_bam/$base.vcf
+    time tabix -p vcf $path_bam/$base.vcf.gz
+    echo `date`" ${base}: index done!"
+  
+done
+
+## file management
+echo `date`"rm all *.g.vcf file."
+ls $path_bam/*.g.vcf | xagus -i rm {}
+echo "All done!"
+
+## End function: gatk_HaplotypeCaller

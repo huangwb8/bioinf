@@ -1,0 +1,38 @@
+## function bam_qualimap
+
+## Description
+# 对bam文件（比如bqsr.bam）进行统计
+
+## Usage
+# nohup bam_qualimap $ws > $ws/log/bam_qualimap.log 2>&1 &
+# tail -f $ws/log/bam_qualimap.log
+
+## Parameters
+ws=$1
+exon_bed=/data/reference/CCDS/human/hg38.exon.bed
+path_bam=$ws/output/align
+path_res=$ws/output/stat/qualimap
+path_log=$ws/log/qualimap
+bam_suffix="_bqsr.bam" #按需更改
+java_mem=20G #按需更改。一般用不了很多内存
+mkdir -p $path_res $path_log
+
+## Programe
+ls $path_bam | grep $bam_suffix | while read id
+do 
+sample=$(basename ${id} ".bam")
+if [ -d $path_res/${sample}_stat ]; then
+    echo `date`" $sample: start qualimap..."
+    nohup qualimap bamqc --java-mem-size=$java_mem \
+        -gff $exon_bed \
+        -bam $path_bam/$id \
+        -outdir $path_res \
+        > $path_log/qualimap_${sample}.log 2>&1 &
+done
+echo `date`" $sample: qualimap none!"
+
+## multiqc
+multiqc $path_res -n qualimap_report -p
+
+## End function: bam_qualimap
+echo "All done!"

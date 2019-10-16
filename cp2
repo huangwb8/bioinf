@@ -1,0 +1,31 @@
+# function cp2
+
+# Description
+# 将~/bin/example中的函数依次复制到新目录中。此时，如果新目录中存在同名的函数，则不覆盖。
+
+# Parameters
+# $1 target bin document
+
+# Usage
+# bash cp2 $nbin
+
+# Programe
+fbin=~/bin/example
+tbin=$1
+
+ls $fbin | while read id 
+do
+if [ ! -f $tbin/$id ]
+then
+cp $fbin/$id $tbin
+echo "${id} copied"
+else
+echo "${id} existed"
+fi
+done
+
+## 变成可执行
+sudo chmod -R +x $tbin
+
+# End mv
+

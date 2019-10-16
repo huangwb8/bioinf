@@ -1,0 +1,57 @@
+## function:signal_tss
+
+## Description:
+# 做chip-seq分析时, 基于基因组bed，样本bw文件，观察整体的TSS（transcription start sites）附近的信号强度
+
+## Usage
+# nohup signal_tss $ws > $ws/log/signal_tss.log 2>&1 &
+# tail -f $ws/log/signal_tss.log
+
+## Parameters
+ws=$1
+path_tss=$ws/output/signal_tss
+#path_bed=/data/reference/bed/raw/mm9_RefSeq.bed # 按需要选择。这里是mm9
+path_bed=/data/reference/bed/ChipSeq/mm9_refSeq_Chip.bed
+path_log=$ws/log/signal_tss
+path_bw=$ws/output/peaks/bw
+path_plot=$path_tss/plot
+nthread=48
+nD=10000 # 一般要画10k和2k的
+mkdir -p $path_tss $path_log $path_plot
+
+## report
+echo "Parameters:
+workspace:$ws
+path_tss: $path_tss
+path_bed: $path_bed
+path_bw: $path_bw
+path_plot: $path_plot
+nD: $nD"
+
+## Programe:
+ls $path_bw | grep 'bw$' |while read id 
+# id=H2Aub1.ChIPSeq-GSM850471.merge.rmdup.bw
+do
+base=$(basename ${id} ".bw")
+# get TSS.gz files
+#computeMatrix reference-point --referencePoint TSS -p $nthread -b 10000 -a 10000 -R $path_bed -S ${path_bw}/${id} --skipZeros -o ${path_tss}/${base}_TSS_${nD}.gz --outFileSortedRegions ${path_tss}/${base}_TSS_${nD}.bed 
+echo "${base}: computeMatrix reference-point process..."
+time computeMatrix reference-point --referencePoint TSS \
+-p $nthread -b $nD -a $nD \
+-R $path_bed \
+-S ${path_bw}/${id} \
+--skipZeros -o ${path_tss}/${base}_TSS_${nD}.gz \
+--outFileSortedRegions ${path_tss}/${base}_TSS_${nD}.bed \
+> $path_log/${base}_TSS_${nD}.log 2>&1
+echo "${base}: computeMatrix reference-point done!"
+
+# Plots
+echo "${base}: plot heatmaps..."
+plotHeatmap -m ${path_tss}/${base}_TSS_${nD}.gz -out ${path_plot}/${base}_Heatmap_${nD}.png
+plotHeatmap -m ${path_tss}/${base}_TSS_${nD}.gz -out ${path_plot}/${base}_Heatmap_${nD}.pdf --plotFileFormat pdf --dpi 720
+plotProfile -m ${path_tss}/${base}_TSS_${nD}.gz -out ${path_plot}/${base}_Profile_${nD}.png
+plotProfile -m ${path_tss}/${base}_TSS_${nD}.gz -out ${path_plot}/${base}_Profile_${nD}.pdf --plotFileFormat pdf --dpi 720
+echo "${base}: plot heatmaps done!"
+done
+echo "Done!"
+## End signal_tss

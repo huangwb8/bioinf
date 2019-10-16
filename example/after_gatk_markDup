@@ -1,0 +1,31 @@
+## function:after_gatk_markDup
+
+## Description:
+# 用于比较去重复序列前和去重复序列后的read数的差异；
+
+## Usage:
+# cd $ws/output/align;nohup after_gatk_markDup $ws &
+
+## Parameters
+ws=$1
+path_bam=${ws}/output/align
+touch $path_bam/temp_rawRead $path_bam/temp_markRead $path_bam/colnames $path_bam/temp_case
+echo "cases rawReads markReads" > $path_bam/after_gatk_markDup.report
+## Program
+ls $path_bam | grep "_marked.bam$" | while read id
+do
+case=$(basename ${id} _marked.bam)
+echo "$case" >> $path_bam/temp_case
+rawbam=${case}.bam
+samtools view -@ 48 $path_bam/${rawbam} |wc -l >> $path_bam/temp_rawRead
+samtools view -@ 48 $path_bam/${id} | wc -l >> $path_bam/temp_markRead
+done
+
+## paste
+paste $path_bam/temp_case $path_bam/temp_rawRead $path_bam/temp_markRead > $path_bam/temp_compare
+cat $path_bam/temp_compare >> $path_bam/after_gatk_markDup.report
+
+## rm temprature values
+rm -r $path_bam/temp_*
+
+## End after_gatk_markDup

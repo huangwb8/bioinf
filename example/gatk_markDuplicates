@@ -1,0 +1,36 @@
+## function: gatk_markDuplicates
+
+## Description
+# 去除重复序列
+
+## Parameters: 
+# $1: the path of .bam
+# $2：the number of threads
+ws=$1
+path_bam=${ws}/output/align
+path_log=${ws}/log/gatk_markDuplicates
+GATK=/home/huangwb8/Downloads/conda/location/envs/bioinf/bin/gatk
+nthread=48
+
+## Usage:
+# nohup gatk_markDuplicates $ws &
+
+## function: gatk_markDuplicates
+
+# dir
+mkdir -p $path_log
+
+# cycle
+ls $path_bam | grep "bam$" | sed "s/.bam//g" | while read id
+do
+    BAM=$path_bam/${id}.bam
+
+    if [ ! -f $path_bam/${id}_marked.bam ]
+    then
+    echo "start MarkDuplicates for ${id}" `date`
+    $GATK MarkDuplicates --java-options "-Xmx60G -Djava.io.tmpdir=./ " -I ${BAM} --REMOVE_DUPLICATES=true -O $path_bam/${id}_marked.bam -M $path_bam/${id}.metrics 1>$path_log/${id}_marked.log 2>&1 
+    echo "end MarkDuplicates for ${id}" `date`
+    samtools index -@ $nthread -m 5G -b $path_bam/${id}_marked.bam
+    fi
+done
+## End function

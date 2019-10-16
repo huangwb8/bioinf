@@ -1,0 +1,38 @@
+## function: count_feature
+## Description:
+# 通过featureCounts对RNA-Seq实验的*.bam文件计算read counts，并输出表达矩阵。此法相对较快，推荐使用。一般人的就10来分钟。
+
+## Usage
+# nohup count_feature $ws > $ws/log/featureCounts.log 2>&1 &
+# tail -f $ws/log/featureCounts.log
+
+## Parameter
+ws=$1
+path_align=${ws}/output/align
+path_log=${ws}/log/count_feature
+path_count=${ws}/output/count_feature
+path_genome_gtf=/data/reference/gtf/hg38_gencode.v32.annotation.gtf.gz
+nthread=48
+mkdir -p $path_count $path_log
+
+## Programe
+ls $path_align | grep '.bam$' | while read id
+#id=N052611-Albuterol.bam
+do
+  case=$(basename ${id} ".bam")
+  if [ ! -f $path_count/${case}.count ]; then   
+  # -p If specified, fragments (or templates) will be counted instead of reads. This option is only applicable for paired-end reads.
+  # exon保证了read是比对到外显子中的，这些read对于RNA-Seq而言才是有意义的。
+  echo `date`"${case}: do count_feature ..."  
+  nohup featureCounts -T $nthread -p \
+      -a $path_genome_gtf \
+      --tmpDir /data/ \
+      --verbose \
+      -t exon -g gene_id  \
+      -o $path_count/${case}.count \
+      $path_align/${id} \
+      > $path_log/featureCounts_${case}.log 2>&1 &
+  echo `date`"${case}: done count_feature!"
+  fi
+done
+## End count_feature

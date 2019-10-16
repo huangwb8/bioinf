@@ -1,0 +1,36 @@
+## function: bam_res
+
+## Descritiopn
+# 对.bam结果进行统计计算和质量控制。
+
+## Parameters
+ws=$1 #work space
+path_genome_fa=/data/reference/genome/hg38/hg38.fa
+path_bam=${ws}/output/align
+path_stat=${ws}/output/stat;res=$path_stat/plot-bamstats
+path_log=${ws}/log/bam_res
+nthread=48
+
+## Usage
+# nohup bam_res $ws &
+# tail -f $ws/output/align/stat/*.stat
+
+## Programe
+
+# dir
+mkdir -p $path_stat $res $path_log
+
+# cycle: 
+ls $path_bam | grep 'bam$' |while read id
+do
+case=$(basename ${id} .bam)
+
+# samtools stats
+samtools stats -@ $nthread --reference $path_genome_fa $path_bam/${id} > $path_stat/${case}.stat
+
+# plot_bamstats
+id2=${case}.stat
+mkdir -p $res/${case}
+plot-bamstats -p $res/${case}/${case} $path_stat/${id2} > $path_log/plot-bamstats_${case}.log
+done
+## End bam_res

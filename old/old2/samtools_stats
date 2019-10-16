@@ -1,0 +1,20 @@
+## function: samtools_stats
+# $1 the path of .bam file
+# $2 the threads of the process
+# new path
+mkdir -p ./stat
+
+# cycle: samtools stats
+ls $1/*bam | while read id
+do
+nohup samtools stats -@ $2 --reference /data/reference/genome/hg38/hg38.fa ${id} > ./stat/$(basename ${id} .bam).stat &
+done
+# cycle: plot-bamstats
+cd ./stat 
+touch plot-bamstats.log
+ls ./*stat | while read id
+do
+nohup plot-bamstats -p ./$(basename ${id} .stat) ${id} >> plot-bamstats.log &
+done
+cd ..
+# End samtools_stats

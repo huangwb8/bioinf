@@ -1,0 +1,27 @@
+## function: count_htseq
+## Description:
+# 通过htseq-count对.bam文件计算read counts，并输出表达矩阵。此法十分消耗内存和时间，不推荐使用。
+
+## Usage
+# nohup count_htseq $ws &
+# tail -f *count
+
+## Parameter
+ws=$1
+path_align=${ws}/output/align
+path_count=${ws}/output/count_htseq
+path_genome_gtf=/data/reference/gtf/hg38_gencode.v32.annotation.gtf.gz
+mkdir -p $path_count
+
+## Programe
+ls $path_align | grep '.bam$' | while read id
+#id=N052611-Albuterol.bam
+do
+  case=$(basename ${id} ".bam")
+  if [ ! -f $path_count/${case}.count ]; then 
+  echo `date`"${case}: do htseq-count ..."
+  htseq-count -r pos -f bam $path_align/${id} $path_genome_gtf > $path_count/${case}.count
+  echo `date`"${case}: done htseq-count!"
+  fi
+done
+## End count_htseq
