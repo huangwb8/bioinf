@@ -5,20 +5,24 @@
 
 ## Parameters
 ws=$1 #work space
-path_genome_fa=/data/reference/genome/hg38/hg38.fa
+# path_genome_fa=/data/reference/genome/hg38/hg38.fa
+path_genome_fa=/data/reference/mouse/mm10/genome/mm10.fa
 path_bam=${ws}/output/align
-path_stat=${ws}/output/stat;res=$path_stat/plot-bamstats
+path_stat=${ws}/output/stat;
+path_bamstats=${ws}/output/plot-bamstats
 path_log=${ws}/log/bam_res
+project=SCS_2
 nthread=48
 
 ## Usage
-# nohup bam_res $ws &
+# nohup bam_res $ws > $ws/log/bam_res.log 2>&1 &
 # tail -f $ws/output/align/stat/*.stat
+# kill -9 `ps -ef | grep -E 'multiqc|stats' | awk '{print $2}'`
 
 ## Programe
 
 # dir
-mkdir -p $path_stat $res $path_log
+mkdir -p $path_stat $path_log $path_bamstats
 
 # cycle: 
 ls $path_bam | grep 'bam$' |while read id
@@ -26,11 +30,23 @@ do
 case=$(basename ${id} .bam)
 
 # samtools stats
+echo `date`" ${case}: Process samtools stats..."
 samtools stats -@ $nthread --reference $path_genome_fa $path_bam/${id} > $path_stat/${case}.stat
 
 # plot_bamstats
+echo `date`" ${case}: Process plot_bamstats..."
 id2=${case}.stat
-mkdir -p $res/${case}
-plot-bamstats -p $res/${case}/${case} $path_stat/${id2} > $path_log/plot-bamstats_${case}.log
+mkdir -p $path_bamstats/${case}
+plot-bamstats -p $path_bamstats/${case}/${case} $path_stat/${id2} > $path_log/plot-bamstats_${case}.log
 done
+
+## multiqc
+echo `date`" Process multiqc..."
+mkdir -p $path_stat/multiqc
+nohup multiqc $path_stat -n bamQC_${project} -p -i " Basic bam QC of ${project}" -o $path_stat/multiqc > $path_log/multiqc_samtools-stats.log 2>&1 &
+
+mkdir -p $path_bamstats/multiqc
+nohup multiqc $path_bamstats -n plot-bamstats_${project} -p -i " Bam QC of ${project} by bamstats" -o $path_bamstats/multiqc > $path_log/multiqc_plot-bamstats.log 2>&1 &
+
 ## End bam_res
+echo `date`" All done!"

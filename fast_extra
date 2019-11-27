@@ -1,0 +1,8 @@
+
+## example
+# echo "'$database'" | xargs -i fast_extra {} '[;]' 
+# fast_extra "annovar refGene;cytoBand;annovar exac03;annovar avsnp147;annovar dbnsfp30a" "[;]"
+
+## Programe
+id=/home/huangwb8/bin
+echo "'$1'" | xargs -i Rscript $id/example/fast_extra.R {} $2

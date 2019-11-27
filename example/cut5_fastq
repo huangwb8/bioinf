@@ -1,20 +1,26 @@
-# function cut5_fastq
+## function cut5_fastq
 
-# Description
+## Description
 # cut some bps from 5' end
 
-# Parameters
+## Usage:
+# nohup cut5_fastq $ws 5 &
+
+## Parameters
 ws=$1
-path_fastq=$ws/output/fastq
+path_fastq=$ws/output/clean-trim_galore
+path_res=$ws/output/cut5_fastq
 path_log=$ws/log/cut5_fastq
+suffix=fq.gz
+bp=15
 
-# log
-mkdir -p $path_log
+## log
+mkdir -p $path_log $path_res
 
-# programe
-ls $path_fastq | grep "fastq.gz$" | while read id
+## programe
+ls $path_fastq | grep $suffix | while read id
 do
 echo "$path_fastq/$id"
-time cutadapt -u 5 -o ${path_fastq}/$(basename ${id} .fastq.gz)_trim.fastq.gz ${path_fastq}/${id} > $path_log/cut5_fastq_{$id}.log 2>&1 
+nohup time cutadapt -u $bp -o ${path_res}/$(basename ${id} ${suffix})_cut5.fastq.gz ${path_fastq}/${id} > $path_log/cut5_fastq_${id}.log 2>&1 &
 done
-# End cut5_fastq
+## End cut5_fastq

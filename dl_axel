@@ -1,0 +1,12 @@
+## Description
+# Fast way to download via axel
+
+## Parameters
+url=$1
+
+## Programe
+# -s `expr 100 \* 1024 \* 1024` 
+base=$(basename $url)
+nohup axel -vc -s `expr 100 \* 1024 \* 1024`  -T 60 $url > dl_axel-${base}.log 2>&1 &
+
+## End

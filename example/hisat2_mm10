@@ -1,0 +1,84 @@
+## function: hisat2_mm10
+
+## Description
+# 通过hisat2，根据mm10基因组对*.fastq.gz进行比对。通过samtools sort进行排序。最终生成*.bam文件。
+
+## Parameters
+ws=$1
+index_base=/data/reference/mouse/mm10/index/hisat2/mm10 # 注意这不是文件路径而是文件前缀
+path_sra2fq_txt=${ws}/input/case/sra2case.txt
+path_fastq=${ws}/output/clean-trim_galore
+path_log=${ws}/log/hisat2_mm10
+path_align=${ws}/output/align
+path_genome_fa=/data/reference/mouse/mm10/genome/mm10.fa
+seq_type=RNA-Seq # @RG
+fq_postfix=trimmed
+nthread=48
+
+## Usage
+# nohup hisat2_mm10 $ws > $ws/log/hisat2_mm10.log 2>&1 &
+# tail -f $ws/log/hisat2_mm10.log
+# tail -f $ws/log/hisat2_mm10/*.log
+
+## Programs: 
+# dir & log
+mkdir -p $path_log $path_align
+
+# cycle for bwa mem
+cat $path_sra2fq_txt |while read id 
+# id="SRR1039508 N61311-Untreated GSM1275862 N61311-Untreated-GSM1275862"
+do
+    arr=(${id})
+    case=${arr[1]}
+    fq1=$path_fastq/${case}_1_${fq_postfix}_1.fq.gz
+    fq2=$path_fastq/${case}_2_${fq_postfix}_2.fq.gz
+    fq=$path_fastq/${case}_${fq_postfix}.fq.gz
+    
+    if [ -f $path_align/${case}.bam ]; then
+    echo "$path_align/${case}.bam had existed.Ignore"
+    elif [ -f $fq1 -a -f $fq2 ]
+    then
+    echo `date`" ${case}:paired reads data.do hisat2 analysis..."
+    # hisat2: -t 输出时间；-p 线程数；-x index前缀；-1/-2 fq文件 -S 输出sam文件;--rg-id 设置read group id. @RG对于下一步的GATK碱基质量重校正BQSR最佳实践是需要的。
+    hisat2 -t -p $nthread -x $index_base -1 $fq1 -2 $fq2 \
+    --rg-id "${case}" \
+    --rg "SM:${case}" --rg "LB:${seq_type}" --rg "PL:Illumina" \
+    -S $path_align/${case}.sam \
+    >$path_log/hisat2_mm10_paired_${case}.log 2>&1
+     echo `date`" ${case}:hisat2 done!"
+    
+    # samtools view: -q 只纳入质量在此数字以上的reads。转录本需要30吗？
+    echo `date`" ${case}:samtools view..."
+    samtools view -@ $nthread -bhS -q 30 $path_align/${case}.sam >$path_align/${case}_nonsort.bam
+    echo `date`" ${case}:samtools view done!"
+    
+    # samtools sort: -m设定每个线程的最大内存
+    echo `date`" ${case}:samtools sort... "
+    samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam $path_align/${case}_nonsort.bam >$path_log/${case}.samtools_sort_mm10.log 2>&1
+    echo `date`" ${case}:samtools sort done!"
+    
+    else
+    echo `date`" ${case}:unpaired reads data.do hisat2 analysis..."
+    hisat2 -t -p $nthread -x $index_base -U $fq \
+    --rg-id "${case}" \
+    --rg "SM:${case}"  --rg "LB:${seq_type}"  --rg "PL:Illumina" \
+    -S $path_align/${case}.sam \
+    >$path_log/hisat2_mm10_unpaired_${case}.log 2>&1
+    echo `date`" ${case}:hisat2 done!"
+    
+    # samtools view: -q 只纳入质量在此数字以上的reads。转录本需要30吗？
+    echo `date`" ${case}:samtools view..."
+    samtools view -@ $nthread -bhS -q 30 $path_align/${case}.sam >$path_align/${case}_nonsort.bam
+    echo `date`" ${case}:samtools view done!"
+    
+    # samtools sort: -m设定每个线程的最大内存
+    echo `date`" ${case}:samtools sort... "
+    samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam $path_align/${case}_nonsort.bam >$path_log/${case}.samtools_sort_mm10.log 2>&1
+    echo `date`" ${case}:samtools sort done!"
+    fi
+    
+## file management
+if [ -f $path_align/${case}_nonsort.bam ]; then rm $path_align/${case}_nonsort.bam; fi
+if [ -f $path_align/${case}.sam ]; then rm $path_align/${case}.sam; fi
+done
+## End hisat2_mm10

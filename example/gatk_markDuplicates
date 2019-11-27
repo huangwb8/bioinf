@@ -1,7 +1,7 @@
 ## function: gatk_markDuplicates
 
 ## Description
-# 去除重复序列
+# 去除重复序列。常用于DNA测序双端数据。
 
 ## Parameters: 
 # $1: the path of .bam
@@ -9,13 +9,13 @@
 ws=$1
 path_bam=${ws}/output/align
 path_log=${ws}/log/gatk_markDuplicates
-GATK=/home/huangwb8/Downloads/conda/location/envs/bioinf/bin/gatk
+GATK=/home/huangwb8/Downloads/conda/location/bin/gatk
 nthread=48
 
 ## Usage:
-# nohup gatk_markDuplicates $ws &
-
-## function: gatk_markDuplicates
+# nohup gatk_markDuplicates $ws > $ws/log/gatk_markDuplicates.log 2>&1 &
+# tail -f $ws/log/gatk_markDuplicates.log
+# tail -f $ws/log/gatk_markDuplicates/*.log
 
 # dir
 mkdir -p $path_log
@@ -28,9 +28,15 @@ do
     if [ ! -f $path_bam/${id}_marked.bam ]
     then
     echo "start MarkDuplicates for ${id}" `date`
-    $GATK MarkDuplicates --java-options "-Xmx60G -Djava.io.tmpdir=./ " -I ${BAM} --REMOVE_DUPLICATES=true -O $path_bam/${id}_marked.bam -M $path_bam/${id}.metrics 1>$path_log/${id}_marked.log 2>&1 
+    nohup $GATK --java-options "-Xmx60G -Djava.io.tmpdir=/data/tmp " \
+    MarkDuplicates \
+    	-I ${BAM} \
+    	--REMOVE_DUPLICATES=true \
+    	-O $path_bam/${id}_marked.bam \
+    	-M $path_bam/${id}.metrics \
+    	> $path_log/${id}_marked.log 2>&1 &
     echo "end MarkDuplicates for ${id}" `date`
-    samtools index -@ $nthread -m 5G -b $path_bam/${id}_marked.bam
+    #samtools index -@ $nthread -m 5G -b $path_bam/${id}_marked.bam
     fi
 done
 ## End function

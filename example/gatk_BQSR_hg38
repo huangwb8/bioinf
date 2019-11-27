@@ -12,7 +12,7 @@ ws=$1
 path_sra2case_txt=$ws/input/case/sra2case.txt
 path_bam=$ws/output/align
 path_log=$ws/log/gatk_BQSR_hg38
-GATK=/home/huangwb8/Downloads/conda/location/bin/gatk
+GATK=/home/huangwb8/Downloads/conda/location/bin/gatk #按需改动
 snp=/data/reference/index/gatk/hg38/dbsnp_146.hg38.vcf.gz
 indel=/data/reference/index/gatk/hg38/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
 ref=/data/reference/index/gatk/hg38/Homo_sapiens_assembly38.fasta
@@ -32,18 +32,29 @@ cat $path_bam/temp_case
 cat $path_bam/temp_case | while read id
 #id=case3_biorep_B
 do
-touch $path_log/BaseRecalibrator_${id}.log
-touch $path_log/ApplyBQSR_${id}.log
     if [ ! -f $path_bam/${id}${bs}_bqsr.bam ]; then
     
     # BaseRecalibrator
     echo "start BaseRecalibrator for ${id}..." `date`
-    $GATK --java-options "-Xmx60G -Djava.io.tmpdir=./" BaseRecalibrator -R $ref -I $path_bam/${id}${bs}.bam  --known-sites $snp --known-sites $indel -O $path_bam/${id}${bs}_recal.table 1>$path_log/BaseRecalibrator_${id}.log 2>&1 
+    $GATK --java-options "-Xmx60G -Djava.io.tmpdir=./" \
+    	BaseRecalibrator \
+    	-R $ref \
+    	-I $path_bam/${id}${bs}.bam \
+    	--known-sites $snp \
+    	--known-sites $indel \
+    	-O $path_bam/${id}${bs}_recal.table \
+    	> $path_log/BaseRecalibrator_${id}.log 2>&1 
     echo "end BaseRecalibrator for ${id}!" `date`
     
     # ApplyBQSR
     echo "start ApplyBQSR for ${id}..." `date`
-    $GATK --java-options "-Xmx60G -Djava.io.tmpdir=./"  ApplyBQSR  -R $ref  -I $path_bam/${id}${bs}.bam -bqsr $path_bam/${id}${bs}_recal.table -O $path_bam/${id}${bs}_bqsr.bam  1>$path_log/ApplyBQSR_${id}.log  2>&1 
+    $GATK --java-options "-Xmx60G -Djava.io.tmpdir=./" \
+    	ApplyBQSR \
+    	-R $ref \
+    	-I $path_bam/${id}${bs}.bam \
+    	-bqsr $path_bam/${id}${bs}_recal.table \
+    	-O $path_bam/${id}${bs}_bqsr.bam \
+    	> $path_log/ApplyBQSR_${id}.log 2>&1 
     echo "end ApplyBQSR for ${id}!" `date`
     
     # samtools index

@@ -1,0 +1,31 @@
+
+## Parameters
+gv=$1; echo $gv
+db=$2; ecoh $db
+types=$3; echo $types
+path_input=$4; echo $path_input
+path_geneBase=$5; echo $path_geneBase
+path_log=$6; echo $path_log
+
+## Programe
+echo "'$types'" | xargs -i fast_extra {} "[;]" | while read type; do
+    ls $path_input/*.avinput |  while read id; do
+        base=$(basename $id .avinput)
+        
+        ## whether the result had been produced
+        if [ -f $path_geneBase/${type}_${base}*.variant_function ]; then
+            echo "The results of ${type}_${base} have been existed. Ignore."
+        else
+        	echo "${type}_${base}: Producing results."
+            time annotate_variation.pl \
+                --geneanno $id $db \
+                --separate \
+                --outfile $path_geneBase/${type}_${base} \
+                --buildver ${gv} \
+                --dbtype ${type} \
+                --hgvs \
+                > $path_log/ANNOVAR_geneBase_${gv}_${type}_${base}.log 2>&1
+        fi
+    done
+done
+##End

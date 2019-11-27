@@ -1,0 +1,1 @@
+kill -9 `ps -ef | grep -E $1 | awk '{print $2}'`

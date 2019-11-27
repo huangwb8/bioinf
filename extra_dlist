@@ -1,0 +1,5 @@
+
+
+## Programe
+id=/home/huangwb8/bin
+echo "'$1'" | xargs -i Rscript $id/example/extra_dlist.R {}

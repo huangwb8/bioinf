@@ -1,7 +1,11 @@
+
 ## function: samtools_index
 
 ## Description
 # 为bam文件制作index
+
+## Note:
+# 如果将samtools index挂起，似乎速度并不会加快多少。从CPU的占用和Mem的占用来看，资源的利用率也比较低。而且硬盘读取占用很频繁，导致整个系统卡顿。如果有其它任务，不建议使用nohup将samtools index挂起。
 
 ## Parameters
 ws=$1
@@ -10,16 +14,20 @@ path_log=${ws}/log/samtools_index
 nthread=48
 
 ## Example
-# nohup samtools_index ./align 6 &
+# nohup samtools_index $ws &
 
 ## Programe
 # log dir
 mkdir -p $path_log
 
 # cycle
-ls $path_bam | grep "bam$"| while read id
+ls $path_bam | grep ".bam$" | while read id
 do
-nohup samtools index -@ $nthread $path_bam/$id > $path_log/${id}_samtools_index.log 2>&1 &
+case=$(basename $id ".bam")
+echo `date`" ${case}: Start samtools index"
+samtools index -@ $nthread $path_bam/$id > $path_log/${id}_samtools_index.log 2>&1
+echo `date`" ${case}: Done samtools index!"
 done
 
 # End samtools_index
+echo `date`" All done!"

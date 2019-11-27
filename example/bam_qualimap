@@ -1,3 +1,4 @@
+
 ## function bam_qualimap
 
 ## Description
@@ -9,30 +10,35 @@
 
 ## Parameters
 ws=$1
-exon_bed=/data/reference/CCDS/human/hg38.exon.bed
+exon_bed=/data/reference/CCDS/human/exon_probe.GRCh38.gene.bed
 path_bam=$ws/output/align
 path_res=$ws/output/stat/qualimap
 path_log=$ws/log/qualimap
 bam_suffix="_bqsr.bam" #按需更改
-java_mem=20G #按需更改。一般用不了很多内存
-mkdir -p $path_res $path_log
+java_mem=2G #按需更改。一般用不了很多内存
+project=wes_2
+mkdir -p $path_res/multiqc $path_log
 
 ## Programe
 ls $path_bam | grep $bam_suffix | while read id
 do 
 sample=$(basename ${id} ".bam")
-if [ -d $path_res/${sample}_stat ]; then
+if [ ! -d $path_res/${sample}_stat ]; then
+    mkdir -p $path_res/${sample}_stat
     echo `date`" $sample: start qualimap..."
     nohup qualimap bamqc --java-mem-size=$java_mem \
         -gff $exon_bed \
         -bam $path_bam/$id \
-        -outdir $path_res \
+        -outdir $path_res/${sample}_stat \
         > $path_log/qualimap_${sample}.log 2>&1 &
+    echo `date`" $sample: qualimap none!"
+ fi
 done
-echo `date`" $sample: qualimap none!"
+# tail -f $path_log/qualimap*
 
 ## multiqc
-multiqc $path_res -n qualimap_report -p
+multiqc $path_res -n pre_qc-${project} -p -i " QC REPORT OF ${project}" -o $path_res/multiqc
 
 ## End function: bam_qualimap
 echo "All done!"
+

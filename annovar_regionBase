@@ -1,0 +1,39 @@
+
+
+
+
+## Parameters
+gv=$1; echo $gv
+db=$2; echo $db
+types=$3; echo $types
+path_input=$4; echo $path_input
+path_regionBase=$5; echo $path_geneBase
+path_log=$6; echo $path_log
+
+## Usage
+# annovar_regionBase $gv $db $types $path_input $path_regionBase $path_log &
+
+## Programe
+echo "'${types}'" | xargs -i fast_extra {} "[;]" | while read type; do
+    ls $path_input/*.avinput | while read id; do
+        # id=/home/huangwb8/Test/annovar/example/input/ex1.avinput
+        base=$(basename $id .avinput)
+    
+        ## whether the result had been produced
+        if [ -f $path_regionBase/${base}.${type} ]; then
+            echo "The results of ${type}_${base} have been existed. Ignore."
+        else
+            echo "${type}_${base}: Producing results."
+            time annotate_variation.pl \
+                --memtotal `expr 35 \* 1024 \* 1024` \
+                --regionanno $id $db \
+                --separate \
+                --outfile $path_regionBase/${base} \
+                --buildver ${gv} \
+                --dbtype ${type} \
+                --hgvs \
+                > $path_log/ANNOVAR_regionBase_${gv}_${type}_${base}.log 2>&1
+        fi
+    done
+done
+

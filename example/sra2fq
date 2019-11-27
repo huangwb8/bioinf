@@ -1,10 +1,10 @@
 ## function: sra2fq
 
-# Usage:
-# cd $ws/input/sra;nohup bash sra2fq $ws & # 由于scratch-path的原因，一定要在.sra的子目录下才可以成功
-
 # Description
 # 将sra转换成fastq.gz
+
+# Usage:
+# cd $ws/input/sra;nohup bash sra2fq $ws & # 由于scratch-path的原因，一定要在.sra的子目录下才可以成功
 
 # Parameters:
 ws=$1 #wp=/home/huangwb8/Test/wes_1
@@ -14,11 +14,8 @@ path_fastq=${ws}/output/fastq
 path_log=${ws}/log/sra2fq
 nthread=48
 
-# Setting
-# x=sra2fq;sudo chmod 777 $ws/bin/$x;cat $ws/bin/$x
-
 # create space 
-mkdir -p {${path_fastq},${path_log}}
+mkdir -p $path_fastq $path_log
 
 # sra2fastq
 cat ${path_sra2fq_txt} | while read id
@@ -26,32 +23,34 @@ do
   arr=(${id})
   sample=${arr[0]}.sra # sample=SRR3182421.sra
   case=${arr[1]} # case=case3_germline
-   if [ -f ${path_sra}/${sample} ] #只在实际存在的文件才会被分析 
-   then
-   touch ${path_log}/sra2fq_${case}.log
-  ## -p show progress; -x print details; -3 writes single reads in special file;-N use row-id as name; -P print read-numbers; -f force to overwrite existing file(s);-e how many thread; --skip-technical skip technical reads
-  time fasterq-dump -p -x -3 -N -P --skip-technical -e ${nthread} ${path_sra}/${sample} -O ${path_fastq} > ${path_log}/sra2fq_${case}.log 2>&1  
+  
+  if [ -f ${path_fastq}/${case}.fastq.gz -o -f ${path_fastq}/${case}_1.fastq.gz ]; then 
+  echo "${case}: fastq.gz data existed. Ignored."
+  elif [ -f ${path_sra}/${sample} ]; then
+  ## -p show progress; -x print details; -3 writes single reads in special file;-N use row-id as name; -P print read-numbers; -f force to overwrite existing file(s)，这里不加;-e how many thread; --skip-technical skip technical reads
+  time fasterq-dump -p -x -3 -N -P --skip-technical -e ${nthread} ${path_sra}/${sample} -O ${path_fastq} > ${path_log}/sra2fq_${case}.log 2>&1
+  else
+  echo "${path_sra}/${sample} dosen't existed.Please check it."
+  fi
   
   ## 检测是双端/单端测序数据
-  if [[-f ${path_fastq}/${sample}_1.fastq] -a [-f ${path_fastq}/${sample}_2.fastq]]
-  then # 双端
-  #sed s/${sample}/${case}/ ${path_fastq}/${sample}_1.fastq > ${path_fastq}/${case}_1.fastq
-  mv ${path_fastq}/${sample}_1.fastq ${path_fastq}/${case}_1.fastq
-  pigz -p ${nthread} ${path_fastq}/${case}_1.fastq	
-  #sed s/${sample}/${case}/ ${path_fastq}/${sample}_2.fastq > ${path_fastq}/${case}_2.fastq
-  mv ${path_fastq}/${sample}_2.fastq ${path_fastq}/${case}_2.fastq
-  pigz -p ${nthread} ${path_fastq}/${case}_2.fastq
-  else # 单端
-  mv ${path_fastq}/${sample}.fastq ${path_fastq}/${case}.fastq
-  pigz -p ${nthread} ${path_fastq}/${case}.fastq
+  if [ -f ${path_fastq}/${sample}_1.fastq -a -f ${path_fastq}/${sample}_2.fastq ]; then
+     echo "${case}: paired data"
+     mv ${path_fastq}/${sample}_1.fastq ${path_fastq}/${case}_1.fastq
+     pigz -p ${nthread} ${path_fastq}/${case}_1.fastq	
+     mv ${path_fastq}/${sample}_2.fastq ${path_fastq}/${case}_2.fastq
+     pigz -p ${nthread} ${path_fastq}/${case}_2.fastq
+  elif [ -f ${path_fastq}/${sample}.fastq ]; then
+     echo "${case}: unpaired data"
+     mv ${path_fastq}/${sample}.fastq ${path_fastq}/${case}.fastq
+     pigz -p ${nthread} ${path_fastq}/${case}.fastq
+  else
+  	echo "${case}: no fastq data. Ignored."
   fi
 
-  else
-  echo "${sample} is not existed."
-  fi
 done
 
 ## 清除多余的文件
 #ls $path_fastq | grep ".fastq$" | while read i;do rm $path_fastq/$i;done
-
+echo "All done!"
 # End sra2fq

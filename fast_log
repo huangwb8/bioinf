@@ -1,0 +1,18 @@
+## Description
+# Fast way to tail recent log files
+
+## Usage
+# fast_log $path_log 3
+
+## Parameters
+path_log=$1
+head_num=$2
+user=huangwb8
+#head_num=4
+#user=huangwb8
+
+## Programme
+log=$(ls $path_log/*.log -hlt | head -${head_num} | grep $user | cut -d ':' -f 2 | cut -d " " -f 2)
+cd $path_log; tail -f $log
+
+## End

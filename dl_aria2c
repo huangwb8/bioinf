@@ -1,0 +1,11 @@
+## Descriptions
+# Fast way to download a url via aria2c
+
+## Parameters
+url=$1
+
+## Programe
+base=$(basename $url)
+nohup aria2c -c -d . -s 10 $url > dl_aria2c-${base}.log 2>&1 &
+
+## End
