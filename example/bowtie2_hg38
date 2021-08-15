@@ -31,46 +31,69 @@ do
     fq=$path_fastq/${case}.fastq.gz
     
     if [ -f $path_align/${case}.bam ]; then
-    echo `date`"$path_align/${case}.bam had existed."
+    	echo `date`"$path_align/${case}.bam had existed."
     elif [ -f $fq1 -a -f $fq2 -a]; then
     
-    echo `date`"${case}: paired data. Do bowtie2 ..."
-    bowtie2 -p $nthread -x $index_base -U $fq1 $fq2 \
-    --rg-id "${case}" \
-    --rg "SM:${case}" \
-    --rg "LB:${seq_type}" \
-    --rg "PL:Illumina" \
-    -S $path_align/${case}.sam
-    echo `date`"${case}: bowtie2 done!"
-    
-    echo `date`"${case}: samtools view ..."
-    samtools view -@ $nthread -bhS -q 30 $path_align/${case}.sam >$path_align/${case}_nonsort.bam
-    echo `date`"${case}: samtools view done!"
-    
-    echo `date`"${case}: samtools sort ..."
-    samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam $path_align/${case}_nonsort.bam >$path_log/${case}.align_bowtie2_hg38.log 2>&1
-    echo `date`"${case}: samtools sort done!"
+        echo `date`"${case}: paired data. Do bowtie2 ..."
+        bowtie2 -p $nthread -x $index_base -U $fq1 $fq2 \
+            --rg-id "${case}" \
+            --rg "SM:${case}" \
+            --rg "LB:${seq_type}" \
+            --rg "PL:Illumina" \
+            -S $path_align/${case}.sam
+        echo `date`"${case}: bowtie2 done!"
+
+        echo `date`"${case}: samtools view ..."
+        samtools view -@ $nthread \
+            -bhS -q 30 $path_align/${case}.sam \
+            > $path_align/${case}_nonsort.bam
+        echo `date`"${case}: samtools view done!"
+
+        echo `date`"${case}: samtools sort ..."
+        samtools sort -@ $nthread -m 1G \
+            --reference $path_genome_fa \
+            -o $path_align/${case}.bam \
+            $path_align/${case}_nonsort.bam \
+            > $path_log/${case}.align_bowtie2_hg38.log 2>&1
+        echo `date`"${case}: samtools sort done!"
+        
+        echo `date`"${case}: samtools index..."
+        samtools index -@ $nthread $path_align/${case}.bam
+        echo `date`"${case}: samtools index done!"
     
     else
-    echo `date`"${case}: unpaired data. Do bowtie2 ..."
-    bowtie2 -p $nthread -x $index_base -U $fq \
-    --rg-id "${case}" \
-    --rg "SM:${case}" \
-    --rg "LB:${seq_type}" \
-    --rg "PL:Illumina" \
-    -S $path_align/${case}.sam
-    echo `date`"${case}: bowtie2 done!"
-    
-    echo `date`"${case}: samtools view ..."
-    samtools view -@ $nthread -bhS -q 30 $path_align/${case}.sam >$path_align/${case}_nonsort.bam
-    echo `date`"${case}: samtools view done!"
-    
-    echo `date`"${case}: samtools sort ..."
-    samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam $path_align/${case}_nonsort.bam >$path_log/${case}.align_bowtie2_hg38.log 2>&1
-    echo `date`"${case}: samtools sort done!"
+        echo `date`"${case}: unpaired data. Do bowtie2 ..."
+        bowtie2 -p $nthread -x $index_base -U $fq \
+            --rg-id "${case}" \
+            --rg "SM:${case}" \
+            --rg "LB:${seq_type}" \
+            --rg "PL:Illumina" \
+            -S $path_align/${case}.sam
+        echo `date`"${case}: bowtie2 done!"
+
+        echo `date`"${case}: samtools view ..."
+        samtools view -@ $nthread \
+            -bhS -q 30 \
+            $path_align/${case}.sam \
+            >$path_align/${case}_nonsort.bam
+        echo `date`"${case}: samtools view done!"
+
+        echo `date`"${case}: samtools sort ..."
+        samtools sort \
+            -@ $nthread -m 1G \
+            --reference $path_genome_fa \
+            -o $path_align/${case}.bam \
+            $path_align/${case}_nonsort.bam \
+            > $path_log/${case}.align_bowtie2_hg38.log 2>&1
+        echo `date`"${case}: samtools sort done!"
+        
+        echo `date`"${case}: samtools index..."
+        samtools index -@ $nthread $path_align/${case}.bam
+        echo `date`"${case}: samtools index done!"
     fi
     
     ## 删除多余的文件
     rm $path_align/*.sam $path_align/*_nonsort.bam
 done
+
 # End bowtie2_hg38

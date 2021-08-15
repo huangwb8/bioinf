@@ -1,0 +1,40 @@
+## parameters
+# path_avinput=~/Project/loci2seq/GPL17692
+path_avinput=$1
+genome_version=$2
+ws=$path_avinput/loci2gene
+path_annovar=/data/annovar/version_20191024
+xref=$path_annovar/example/gene_xref.txt
+humandb=$path_annovar/humandb
+path_log=$ws/log
+path_res=$ws/result
+
+## Usage
+# loci2gene $path_avinput hg38
+
+## dir management
+mkdir -p $path_log $path_res
+
+## Programe
+ls $path_avinput/*.avinput | while read id; do 
+    # basename
+    base=$(basename $id '.avinput')
+
+    # annovar 
+    table_annovar.pl $id \
+        $humandb \
+        --tempdir /data/tmp \
+        --thread 48 \
+        -buildver $genome_version \
+        -out $path_res/annovar_${base} \
+	--otherinfo \
+        -remove \
+        -protocol refGene,ensGene,cytoBand \
+        -operation gx,gx,r \
+        -nastring . \
+        -csvout \
+        -polish \
+        -xref $xref \
+        > $path_log/ANNOVAR_${base}.log 2>&1
+done
+## End   

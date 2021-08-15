@@ -17,7 +17,7 @@ path_bw=$ws/output/peaks/bw
 path_plot=$path_tss/plot
 nthread=48
 nD=10000 # 一般要画10k和2k的
-mkdir -p $path_tss $path_log $path_plot
+mkdir -p $path_tss $path_log $path_plot $path_bw
 
 ## report
 echo "Parameters:

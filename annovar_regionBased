@@ -1,0 +1,39 @@
+## Parameters
+echo "=============Parameters information==============="
+gv=$1; echo "genomic version: $gv"
+db=$2; echo "annovar dabatase: $db"
+region_types=$3; echo "region_types: $region_types"
+path_input=$4; echo "path of *.avinput files: $path_input"
+path_regionBase=$5; echo "save path: $path_regionBase"
+path_log=$6; echo "log path: $path_log"
+echo "==============annovar_regionBase=================="
+
+## Usage
+# annovar_regionBase $gv $db $region_types $path_input $path_regionBase $path_log &
+
+## Programe
+echo "'${region_types}'" | xargs -i fast_extra {} "[;]" | while read type; do
+    ls $path_input/*.avinput | while read id; do
+        # id=/home/huangwb8/Test/annovar/example/input/ex1.avinput
+        base=$(basename $id .avinput)
+    
+        ## whether the result had been produced
+        if [ -f $path_regionBase/${type}/${base}.${gv}_${type} ]; then
+            echo "The results of ${type}_${base} have been existed. Ignore."
+        else
+        	echo "${type}_${base}: Producing results."
+        	# --thread 6 --maxgenethread 4 \
+        	mkdir -p $path_regionBase/${type}
+            time annotate_variation.pl \
+                --memtotal `expr 35 \* 1024 \* 1024` \
+                --regionanno $id $db \
+                --separate \
+                --outfile $path_regionBase/${type}/${base} \
+                --buildver ${gv} \
+                --dbtype ${type} \
+                --hgvs \
+                > $path_log/ANNOVAR_regionBase_${gv}_${type}_${base}.log 2>&1
+        fi
+    done
+done
+echo "==============Done!=================="

@@ -71,7 +71,8 @@ rownames(df) <- Fastextra(as.character(df[,"Geneid"]),"[.]",1)
 COUNT <- df[,-match("Geneid",colnames(df))]
 
 ## save data
-save(COUNT,file=paste0(path_count,"/matrix_counts.rda"))
+COUNT <- matrix(as.numeric(COUNT),nrow = nrow(COUNT),dimnames = list(rownames(COUNT),colnames(COUNT)))
+saveRDS(COUNT,file=paste0(path_count,"/matrix_counts.rds"))
 write.table(COUNT,paste0(path_count,"/matrix_counts.txt"),sep = "\t",col.names = T,row.names = T,quote = F)
 
 LuckyVerbose("All done!")

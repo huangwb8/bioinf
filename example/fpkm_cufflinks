@@ -25,6 +25,7 @@ do
   mkdir -p $path_res/${case}
   echo `date`" ${case}: do fpkm_cufflinks ..."  
   cufflinks -p $nthread \
+  --library-type fr-firststrand \
   -G $path_genome_gtf \
   -o $path_res/${case} \
   $path_align/$id \
@@ -45,6 +46,11 @@ cuffmerge -p $nthread \
     temp.fpkm_cufflink.list \
     > $path_log/cuffmerge.log 2>&1
 echo "cuffmerge: done!"
+
+## make FPKM matrix
+echo "path_fpkm='$path_res'" > $path_res/mergeCufflinksFPKM.R
+cat $nbin/mergeFeatureCounts.R >> $path_res/mergeCufflinksFPKM.R
+Rscript $path_res/mergeCufflinksFPKM.R > $path_log/mergeCufflinksFPKM.log 2>&1
 
 ## End fpkm_cufflinks
 echo "All done! "

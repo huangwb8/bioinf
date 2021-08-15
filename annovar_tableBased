@@ -1,0 +1,51 @@
+## Parameters
+echo " "
+echo "=============Parameters information==============="
+gv=$1; echo "genomic version: $gv"
+db=$2; echo "annovar dabatase: $db"
+table_types=$3; echo "table types: ${table_types}"
+table_operation=$4; echo "table operation: ${table_operation}"
+path_input=$5; echo "path of *.avinput files: ${path_input}"
+path_tableBase=$6; echo "save path: ${path_tableBase}"
+path_log=$7; echo "log path: ${path_log}"
+#table_types="dbnsfp35c"
+#table_operation="f"
+
+echo "==============annovar_tableBase=================="
+
+## Usage
+# annovar_tableBased $gv $db $table_types $table_operation $path_input $path_tableBase $path_log &
+
+## Programe
+i=0
+echo "'${table_types}'" | xargs -i fast_extra {} "[;]" | while read type; do
+#${type}
+    i=`expr $i + 1`
+    p_i=$(echo $table_operation | cut -d ";" -f $i) # operation
+    ls $path_input/*.avinput | while read id; do
+        # id=$path_input/DCIS_P10_Exon_amplification.avinput
+        base=$(basename $id .avinput)
+
+        ## whether the result had been produced
+        if [ -f $path_tableBase/${type}/${base}.${gv}_multianno.csv ]; then
+            echo "The results of ${type}_${base} have been existed. Ignore."
+        else
+            echo "${type}_${base}: Producing results.  Operation is ${p_i}."
+            mkdir -p ${path_tableBase}/${type}
+            table_annovar.pl $id $db \
+                --tempdir /data/tmp \
+                --thread 48 \
+                -buildver ${gv} \
+                -out ${path_tableBase}/${type}/${base} \
+                -remove \
+		--otherinfo \
+                -protocol ${type}\
+                -operation ${p_i} \
+                -nastring . \
+                -csvout \
+                -polish \
+                > $path_log/ANNOVAR_tableBased_${gv}_${type}_${base}.log 2>&1
+        fi
+    done
+done
+echo "==============Done!=================="

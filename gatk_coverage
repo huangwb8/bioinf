@@ -1,0 +1,31 @@
+## Descritpion
+# calculate depth of the bam files
+
+## Usage
+# nohup gatk_coverage ${GATK} ${path_genome} ${path_bam} ${bam_suffix} ${path_res} ${internal_list} ${path_log} > ${path_log}/DepthOfCoverage.log 2>&1 &
+
+## Parameters
+echo " "
+echo "====================GATK-DepthOfCoverage=================="
+GATK=$1; echo "GATK: ${GATK}"
+path_genome=$2; echo "path_genome: ${path_genome}"
+path_bam=$3; echo "path_bam: ${path_bam}"
+bam_suffix=$4; echo "bam_suffix: ${bam_suffix}"
+path_res=$5; echo "path_res: ${path_res}"
+internal_list=$6; echo "internal_list: ${internal_list}"
+path_log=$7; echo "path_log: ${path_log}"
+
+## 	DepthOfCoverage
+ls $path_bam | grep -E "${bam_suffix}\$" | while read id ; do 
+    base=$(basename $id ${bam_suffix})
+    $GATK -Xmx55G \
+        -T DepthOfCoverage \
+        -R ${path_genome} \
+        -o ${path_res}/${base} \
+        -I ${path_bam}/${id} \
+        -L ${internal_list} \
+        --omitDepthOutputAtEachBase --omitIntervalStatistics \
+        -ct 10 -ct 20 -ct 30 \
+        > ${path_log}/DepthOfCoverage_${base}.log 2>&1
+done
+echo "====================Done!====================="

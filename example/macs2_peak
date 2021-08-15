@@ -1,0 +1,57 @@
+## function: macs2_peak
+
+## Description
+# 为macs2制作expression和names,并最后运行macs2 callpeak
+# -B: save extended fragment pileup, and local lambda tracks (two files) at every bp into a bedGraph file. DEFAULT: False 
+# -g: genome sizes。'mm' for mouse(1.87e9); hs
+# -n: Experiment name, which will be used to generate output file names
+# --tempdir: 临时文件的保存位置
+
+## Usage
+# nohup macs2_peak $ws > $ws/log/macs2_peak.log &
+# tail -f $ws/log/macs2_peak.log
+
+## Parameters
+ws=$1
+path_case=$ws/input/case
+peakSampleID=${path_case}/peakSampleID.txt # 自定义。第一列是每个组的组名，其他列为样本（包括control和treatment。个数不限）。
+bamtype=hisat2 # 看情况 
+path_bam=$ws/output/align/${bamtype}
+control_symbol="null" # 自定义。不是control_symbol的被认为全是treatment
+species=hs # mm是鼠,hs是人
+MACS2=/home/huangwb8/Downloads/conda/location/envs/chip-seq/bin/macs2
+path_res=$ws/output/peaks/${bamtype}
+path_log=$ws/log/peaks/${bamtype}
+
+## file management
+mkdir -p $path_res $path_log
+
+## Programe
+
+# get macs2_expression
+/usr/bin/Rscript \
+    /home/huangwb8/bin/example/macs2_expression.R \
+    ${peakSampleID} \
+    ${path_bam} \
+    ${control_symbol}
+
+# find peaks by macs2
+cat ${path_case}/macs2_expression | while read id; do
+    name=$(echo $id | cut -d' ' -f 1)
+    expr=$(echo "'$id'" | xargs -i fast_extra {} "${name} ")
+    
+    if [ ! -f $path_res/${name}_control_lambda.bdg ]; then
+        ## find peaks by macs2
+        nohup $MACS2 callpeak \
+            --tempdir /data/tmp \
+            ${expr} \
+            -f BAM -B -g ${species} \
+            -n ${name} \
+            --outdir $path_res \
+            > $path_log/${names}.log 2>&1 &
+    else 
+    	echo "${name}: MACS2 callpeak had been done. Ignored!"
+    fi
+done
+
+## End

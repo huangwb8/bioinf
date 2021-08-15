@@ -1,5 +1,8 @@
 
 
+
+
+
 ##==========================Input========================##
 # path_seg='/home/huangwb8/Test/wes_2/output/gatk_cnv_unpair/PoT/CallCopyRatioSegments/DCIS_P10_Exon.called.seg'
 args <- commandArgs(T); path_seg <- args[1]

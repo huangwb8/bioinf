@@ -1,0 +1,20 @@
+## Descriptions
+# Fastway to output .avinput for vcf.gz files
+
+## Parameters
+path_input=$1
+
+## Usages
+# vcfgz2avinput $path_input
+
+## Programes
+ls $path_input | grep '.vcf.gz' | while read id; do
+	base=$(basename $id)
+	echo "vcfgz2avinput: ${base}..."
+	nohup convert2annovar.pl \
+        -format vcf4 $id \
+        -outfile $path_input/${base}.avinput \
+        > $path_input/vcfgz2avinput_${base}.log 2>&1 &
+done
+echo "Done!"
+## End

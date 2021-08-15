@@ -1,0 +1,1 @@
+/usr/bin/Rscript /home/huangwb8/bin/example/gdc_manifest.R $1

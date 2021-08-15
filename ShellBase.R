@@ -130,7 +130,60 @@ cut_vector <- function(vt,nsplit=100){
   return(v2)
 }
 
-
+## lucky::mergeMatrixDup
+mergeMatrixDup <- function(x,
+                           mergeCol = T,
+                           fun_col = mean,
+                           refCol = NULL,
+                           mergeRow = T,
+                           fun_row = mean,
+                           refRow = NULL,
+                           parallel = T){
+  
+  ## select duplicate data for row
+  if(mergeRow & !is.null(refRow)){
+    LuckyVerbose("Merge duplicate for row...")
+    dupID_row <- refRow[duplicated(refRow)]
+    logi <- refRow %in% dupID_row
+    x2 <- x[logi, ] # View(x[!logi, ])
+    ref <- refRow[grep(T,logi)]
+    x2 <- apply(x2,2,function(x)tapply(x,ref,fun_row))
+    merN <- rownames(x2)
+    x2 <- rbind(x[!logi, ],x2)
+    rownames(x2)<- c(refRow[!logi],merN)
+  } else {
+    LuckyVerbose("Ignore duplicate for row.")
+    x2 <- x
+  }
+  
+  ## select duplicate data for col
+  if(mergeCol){
+    LuckyVerbose("Merge duplicate for col...")
+    ## new data
+    x <- x2
+    
+    ## refCol
+    if(is.null(refCol)) refCol = colnames(x)
+    
+    ## select duplicate data
+    dupID_Col <- refCol[duplicated(refCol)]
+    logi <- refCol %in% dupID_Col
+    x2 <- x[,logi] # View(x[,!logi])
+    ref <- refCol[grep(T,logi)]
+    x2 <- t(apply(x2,1,function(x)tapply(x,ref,fun_col)))
+    merN <- colnames(x2)
+    x2 <- cbind(x[,!logi],x2)
+    colnames(x2) <- c(refCol[!logi],merN)
+    
+  } else {
+    LuckyVerbose("Ignore duplicate for col.")
+  }
+  
+  ## Output data
+  LuckyVerbose("All done!")
+  return(x2)
+  
+}
 
 
 

@@ -1,0 +1,41 @@
+## Parameters
+echo " "
+echo "=============Parameters information==============="
+gv=$1; echo "genomic version: $gv"
+db=$2; echo "annovar dabatase: $db"
+filter_types=$3; echo "filter types: $filter_types"
+path_input=$4; echo "path of *.avinput files: $path_input"
+path_filterBase=$5; echo "save path: $path_filterBase"
+path_log=$6; echo "log path: $path_log"
+echo "==============annovar_regionBase=================="
+
+## Usage
+# annovar_filterBased $gv $db $filter_types $path_input $path_filterBase $path_log &
+
+## Programe
+echo "'${filter_types}'" | xargs -i fast_extra {} "[;]" | while read type; do
+    ls $path_input/*.avinput | while read id; do
+        # id=$path_input/DCIS_P10_Exon_amplification.avinput
+        base=$(basename $id .avinput)
+    
+        ## whether the result had been produced
+        if [ -f $path_filterBase/${type}/${base}.${gv}_${type}_dropped ]; then
+            echo "The results of ${type}_${base} have been existed. Ignore."
+        else
+        	echo "${type}_${base}: Producing results."
+        	# --thread 6 --maxgenethread 4 \
+        	mkdir -p $path_filterBase/${type}
+            nohup time annotate_variation.pl \
+		--thread 30 \
+                --memtotal `expr 35 \* 1024 \* 1024` \
+                --filter $id $db \
+                --outfile $path_filterBase/${type}/${base} \
+                --buildver ${gv} \
+                --dbtype ${type} \
+                --otherinfo \
+                --score_threshold 0.05 \
+                > $path_log/ANNOVAR_filterBased_${gv}_${type}_${base}.log 2>&1 &
+        fi
+    done
+done
+echo "==============Done!=================="

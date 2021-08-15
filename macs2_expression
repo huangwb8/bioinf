@@ -1,0 +1,2 @@
+#! /usr/bin/Rscript
+Rscript /home/huangwb8/bin/example/macs2_expression.R '$1' '$2' '$3'

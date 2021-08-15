@@ -1,0 +1,89 @@
+
+## function: bwa_mem
+
+## Description
+# 通过bwa的mem算法，根据hg38基因组对*.fastq.gz进行比对。通过samtools sort进行排序。最终生成*.bam文件。
+ # bwa mem: -t 线程数；-M mark shorter split hits as secondary？; 管道|后面的-代表管道前的输出;-R @RG对于下一步的GATK碱基质量重校正BQSR最佳实践是需要的。要事先检查一下@RG是否存在
+
+## Parameters
+#ws=$1
+#index_base=/data/reference/index/bwa/hg38/hg38 # 注意这不是文件路径而是文件前缀
+#path_sra2fq_txt=${ws}/input/case/sra2case.txt
+#path_fastq=${ws}/output/clean-trim_galore # 自定义。有时是clean-trim_galore
+#path_log=${ws}/log/bwa_mem
+#path_align=${ws}/output/align
+#path_genome_fa=/data/reference/genome/hg38/hg38.fa
+#seq_type=WXS
+#suffix=val
+#nthread=48
+ws=$1
+index_base=$2 # 注意这不是文件路径而是文件前缀
+path_genome_fa=$3
+path_sra2fq_txt=$4
+path_fastq=$5 # 自定义。有时是clean-trim_galore
+path_align=$6
+nthread=$7
+seq_type=$8
+suffix=$9
+path_log=${10}
+
+## Usage
+#nohup align_bwa $ws ${index_base} ${path_genome_fa} \
+#    ${path_sra2fq_txt} ${path_fastq} ${path_align} ${nthread} \
+#    ${seq_type} ${suffix} ${path_log} \
+#    > $ws/log/bwa_mem.log 2>&1 &
+# tail -f $ws/log/bwa_mem.log
+
+## dir & log
+mkdir -p $path_log $path_align
+
+# cycle for bwa mem
+cat $path_sra2fq_txt | while read id 
+do
+    # INV_P10_Exon_2_val_2.fq.gz
+    arr=(${id})
+    case=${arr[1]} #case=PBS
+    fq1=$path_fastq/${case}_1_${suffix}_1.fq.gz
+    fq2=$path_fastq/${case}_2_${suffix}_2.fq.gz
+    fq=$path_fastq/${case}_${suffix}.fq.gz
+    
+    if [ -f $path_align/${case}.bam ]; then 
+    	echo `date`"${case}: bam had existed. Ignore!"
+    elif [ -f $fq1 -a -f $fq2 ]; then
+    	## bwa/samtools
+    	echo `date`"${case}: Create bam for paired data..."
+        echo `date`"${case}: Do bwa mem | samtools sort ..."
+        #  bwa mem
+        bwa mem -M \
+            -R "@RG\tID:${case}\tSM:${case}\tLB:${seq_type}\tPL:Illumina" \
+            -t $nthread \
+            $index_base $fq1 $fq2 \
+            > $path_align/${case}_unsort.bam
+        # samtools
+        samtools sort -@ $nthread -m 1G \
+            --reference $path_genome_fa \
+            -o $path_align/${case}.bam \
+            $path_align/${case}_unsort.bam 
+        echo `date`"${case}: bwa/samtools done!"
+	if [ -f $path_align/${case}.bam ]; then rm $path_align/${case}_unsort.bam ; fi
+    elif [ -f $fq -a ! -f $path_align/${case}.bam ]; then
+    	echo `date`"${case}: Create bam for unpaired data ..."
+        echo `date`"${case}: Do bwa mem | samtools sort ..."
+        # bwa mem
+        bwa mem -M \
+            -R "@RG\tID:${case}\tSM:${case}\tLB:${seq_type}\tPL:Illumina" \
+            -t $nthread $index_base $fq \
+            > $path_align/${case}_unsort.bam
+        # sort    
+        samtools sort -@ $nthread -m 1G \
+            --reference $path_genome_fa \
+            -o $path_align/${case}.bam \
+            $path_align/${case}_unsort.bam
+        echo `date`"${case}: bwa/samtools done!"
+	if [ -f $path_align/${case}.bam ]; then rm $path_align/${case}_unsort.bam ; fi
+    else
+    	echo `date`"${case}: not available fastq.gz file. Ignored!"
+    fi  
+    
+done
+# End bwa_hg38

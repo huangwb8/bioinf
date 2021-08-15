@@ -1,0 +1,11 @@
+## Descriptions
+# Fast way to download a url via aria2c
+
+## Parameters
+url=$1
+
+## Programe
+base=$(basename $url)
+wget -bc -o wget_${base}.log -T 120 -t inf ${url}
+
+## End

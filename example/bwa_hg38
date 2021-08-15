@@ -33,18 +33,22 @@ do
     fq2=$path_fastq/${case}_2_${suffix}_2.fq.gz
     fq=$path_fastq/${case}_${suffix}.fq.gz
     
-    if [ -f $fq1 -a -f $fq2 ]
-    then
-    ## bwa/samtools
-    echo `date`"${case}: paired data. Do bwa mem | samtools sort ..."
-    time bwa mem -M -R "@RG\tID:${case}\tSM:${case}\tLB:${seq_type}\tPL:Illumina" -t $nthread $index_base $fq1 $fq2 | samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam - > $path_log/bwa_hg38_pair_${case}.log 2>&1
-    echo `date`"${case}: bwa/samtools done!"
-    elif [ -f $fq ]; then
-    echo `date`"${case}: unpaired data. Do bwa mem | samtools sort ..."
-    time bwa mem -M -R "@RG\tID:${case}\tSM:${case}\tLB:${seq_type}\tPL:Illumina" -t $nthread $index_base $fq | samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam - > $path_log/bwa_hg38_single_${case}.log 2>&1
-    echo `date`"${case}: bwa/samtools done!"
+    if [ -f $path_align/${case}.bam ]; then 
+    	echo `date`"${case}: bam had existed. Ignore!"
+    elif [ -f $fq1 -a -f $fq2 ]; then
+    	## bwa/samtools
+    	echo `date`"${case}: Create bam for paired data..."
+        echo `date`"${case}: Do bwa mem | samtools sort ..."
+        time bwa mem -M -R "@RG\tID:${case}\tSM:${case}\tLB:${seq_type}\tPL:Illumina" -t $nthread $index_base $fq1 $fq2 | samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam - 
+        echo `date`"${case}: bwa/samtools done!"
+    elif [ -f $fq -a ! -f $path_align/${case}.bam ]; then
+    	echo `date`"${case}: Create bam for unpaired data ..."
+        echo `date`"${case}: Do bwa mem | samtools sort ..."
+        time bwa mem -M -R "@RG\tID:${case}\tSM:${case}\tLB:${seq_type}\tPL:Illumina" -t $nthread $index_base $fq | samtools sort -@ $nthread -m 1G --reference $path_genome_fa -o $path_align/${case}.bam - 
+        echo `date`"${case}: bwa/samtools done!"
     else
-    echo `date`"${case}: not available fastq.gz file. Ignored!"
+    	echo `date`"${case}: not available fastq.gz file. Ignored!"
     fi  
+    
 done
 # End bwa_hg38

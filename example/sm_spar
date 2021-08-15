@@ -1,0 +1,42 @@
+## function sm_spar
+
+## Description
+# fast way to run SPAR pipeline for small RNA sequencing data
+# input type is bam format
+
+## Usage
+# nohup sm_spar $ws > $ws/log/sm_spar.log 2>&1 &
+# tail -f $ws/log/sm_spar.log
+
+## Parameters
+ws=$1
+nthread=48
+
+## Programe
+echo "'STAR;hisat2'" | xargs -i fast_extra {} ";" | while read type; do
+
+	## dir management
+    path_align=${ws}/output/align/${type}
+    path_config=${ws}/input/config.hg38.sh
+    path_res=$ws/output/SPAR/${type}_bam
+    path_log=$ws/log/SPAR_${type}
+    mkdir -p $path_res $path_log;
+    
+    ## SPAR
+    ls ${path_align} | grep -E 'bam$' | while read id; do 
+        base=$(basename $id .bam) 
+        if [ ! -d ${path_res}/${base} ]; then
+            mkdir -p ${path_res}/${base}
+            nohup SPAR.sh ${path_align}/${id} \
+                ${path_res}/${base} \
+                ${path_config} \
+                ${nthread} \
+                > ${path_log}/SPAR_${type}_${base}.log 2>&1 &
+            #tail -f ${path_log}/SPAR_${type}_${base}.log
+        else
+            echo "${path_res}/${base}: SPAR result exists. Ignored!"
+        fi
+    done
+done
+
+## End function
