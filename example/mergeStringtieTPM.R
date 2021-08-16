@@ -12,7 +12,7 @@ nd.pac=c("dplyr","plyr","readr")
 Plus.library(nd.pac)
 
 # grobal options:
-options(scipen = 1)
+options(scipen = 100)
 
 ##===========================Programe====================##
 
@@ -73,7 +73,8 @@ for(i in 1:length(f)){ # i=1
     a2 <- as.data.frame(a2)
     a3 <- a2["TPM"]; colnames(a3) <- n.i
     a3[,1] <- as.numeric(as.character(a3[,1]))
-    a3 <- na.omit(a3) # table(is.na(a3$D1)); a3[is.na(a3$D1),]
+    a3[,1][is.na(a3[,1])] <- 0
+    # a3 <- na.omit(a3) # table(is.na(a3$D1)); a3[is.na(a3$D1),]
 
     # Output
     write.table(a3, paste0(Fastextra(f.i,n.i,1),n.i,'.transcript.tpm.tab'),sep = "\t",col.names = T,row.names = T,quote = F)
@@ -86,11 +87,14 @@ for(i in 1:length(f)){ # i=1
 
 # Output
 df_tpm2 <- as.matrix(df_tpm[,-1]); rownames(df_tpm2) <- df_tpm[,1]
+for(j in 1:ncol(df_tpm2)) df_tpm2[,j][is.na(df_tpm2[,j])] <- 0
 saveRDS(df_tpm2, paste0(path_tpm,'/stringtie.tpm.rds'))
 write.table(df_tpm2, paste0(path_tpm,"/stringtie.tpm.txt"),sep = "\t",col.names = T,row.names = T,quote = F)
 
 df_fpkm2 <- as.matrix(df_fpkm[,-1]); rownames(df_fpkm2) <- df_fpkm[,1]
+for(j in 1:ncol(df_fpkm2)) df_fpkm2[,j][is.na(df_fpkm2[,j])] <- 0
 saveRDS(df_fpkm2, paste0(path_fpkm,'/stringtie.fpkm.rds'))
 write.table(df_fpkm2, paste0(path_fpkm,"/stringtie.fpkm.txt"),sep = "\t",col.names = T,row.names = T,quote = F)
 
-
+# grobal options:
+options(scipen = 1)
