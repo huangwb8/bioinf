@@ -1,6 +1,4 @@
 
-
-
 ##==========================Input========================##
 
 # path_stringtie_res = '~/Project/RNA-Seq_A2B1-KO/output/stringtie/hisat2'
@@ -14,8 +12,8 @@
 # )
 # 
 # event.type = c('A3','A5','AF','AL', 'MX', 'RI', 'SE')
-
-
+# 
+# genome_type = 'hg38'
 
 ##==============assistant base function=================##
 source("/home/huangwb8/bin/ShellBase.R",encoding = "UTF-8")
@@ -25,7 +23,7 @@ nd.pac=c("dplyr","plyr","readr")
 Plus.library(nd.pac)
 
 # grobal options:
-options(scipen = 1)
+options(scipen = 100)
 
 ##===========================Programe====================##
 
@@ -52,21 +50,53 @@ if(T){
     }
     rownames(df.i) <- as.character(df.i$transcript)
     df.i <- df.i[-match('transcript',colnames(df.i))]
-    write.table(df.i,paste0(path_suppa_res,'/',n.i,'.stringtie.tpm.tab'),sep = '\t',quote = F)
+    for(j in 1:ncol(df.i)) df.i[,j][is.na(df.i[,j])] <- 0
+    
+    write.table(df.i, paste0(path_suppa_res,'/', n.i, '.stringtie.tpm'),sep = '\t',quote = F)
   }
- 
+  
 }
 
-# PSI matrix
+# PSI: Differential transcript usage
+if(T){
+  f <- list.files(path = path_suppa_res, pattern = paste0('_isoform.psi'), full.names = T,recursive = T) %>% .[grepl(., pattern = genome_type)]
+  for(g in 1:length(Group)){ # g=1
+    name.g <- names(Group)[g]
+    sample.g <- Group[[g]]
+    f.g <- f[grepl(paste0(sample.g , collapse = '|'),f)]
+    df.g <- NULL
+    for(j in 1:length(f.g)){ # j=1
+      f.j <- f.g[j]
+      df.j <- read.table(f.j)
+      df.j$event <- rownames(df.j)
+      if(is.null(df.g)){
+        df.g <- df.j
+      } else {
+        df.g <- full_join(df.g,df.j,by = 'event')
+      }
+    }
+    rownames(df.g) <- as.character(df.g$event)
+    df.g <- df.g[-match('event',colnames(df.g))]
+    for(j in 1:ncol(df.g)){ # j=1
+      df.g[,j] <- as.character(df.g[,j])
+      df.g[,j][df.g[,j] %in% 'NaN'] <- 'nan'
+      df.g[,j][df.g[,j] %in% 'NA'] <- 'nan'
+      df.g[,j][is.na(df.g[,j])] <- 'nan'
+    }
+    write.table(df.g,paste0(path_suppa_res,'/', name.g, '_isoform.psi'), sep = '\t', quote = F)
+  }
+}
+
+# PSI: Differential splicing with local events
 if(T){
   
-  for(i in 1:length(event.type)){ # i=2
+  for(i in 1:length(event.type)){ # i=1
     
     et.i <- event.type[i]
-    f.i <- list.files(path = path_suppa_res, pattern = paste0('_',et.i,'.psi'),full.names = T,recursive = T)
-
-    for(g in 1:length(Group)){ # g=1
+    f.i <- list.files(path = path_suppa_res, pattern = paste0('_',et.i,'.psi'),full.names = T,recursive = T) %>% .[grepl(., pattern = genome_type)]
     
+    for(g in 1:length(Group)){ # g=1
+      
       name.g <- names(Group)[g]
       sample.g <- Group[[g]]
       f.g <- f.i[grepl(paste0(sample.g , collapse = '|'),f.i)]
@@ -85,12 +115,18 @@ if(T){
       }
       rownames(df.g) <- as.character(df.g$event)
       df.g <- df.g[-match('event',colnames(df.g))]
+      for(j in 1:ncol(df.g)){ # j=1
+        df.g[,j] <- as.character(df.g[,j])
+        df.g[,j][df.g[,j] %in% 'NaN'] <- 'nan'
+        df.g[,j][df.g[,j] %in% 'NA'] <- 'nan'
+        df.g[,j][is.na(df.g[,j])] <- 'nan'
+      }
       write.table(df.g,paste0(path_suppa_res,'/',name.g,'.',et.i,'.psi'),sep = '\t',quote = F)
       
     }
-
+    
   }
- 
+  
 }
 
 
