@@ -2,7 +2,7 @@
 
 
 ##==========================Input========================##
-# path_tpm='/home/huangwb8/Project/RNA-Seq_A2B1-KO/output/stringtie/hisat2'
+# path_stringtie='/home/huangwb8/Project/RNA-Seq_A2B1-KO/output/stringtie/hisat2'
 
 ##==============assistant base function=================##
 source("/home/huangwb8/bin/ShellBase.R",encoding = "UTF-8")
@@ -16,7 +16,7 @@ options(scipen = 100)
 
 ##===========================Programe====================##
 
-f <- list.files(path_tpm,pattern = 'gene_abund.tab',full.names = T,recursive = T)
+f <- list.files(path_stringtie,pattern = 'gene_abund.tab',full.names = T,recursive = T)
 
 df_tpm <- NULL; df_fpkm <- NULL
 for(i in 1:length(f)){ # i=1
@@ -56,7 +56,7 @@ for(i in 1:length(f)){ # i=1
   # write.table(df.i2.m, paste0(Fastextra(f.i,n.i,1),n.i,'.tpm.tab'),sep = "\t",col.names = T,row.names = T,quote = F)
   if(T){
     
-    x <- readr::read_delim(paste0(path_tpm,'/',n.i,'/merged.gtf'), delim = '\t', comment = "#",col_names = F) %>% as.data.frame()
+    x <- readr::read_delim(paste0(path_stringtie,'/',n.i,'/merged.gtf'), delim = '\t', comment = "#",col_names = F) %>% as.data.frame()
     x2 <- x[x[,3] == 'transcript',]
     
     a <- apply(as.matrix(x2[,9]), 1, function(i){
@@ -88,13 +88,13 @@ for(i in 1:length(f)){ # i=1
 # Output
 df_tpm2 <- as.matrix(df_tpm[,-1]); rownames(df_tpm2) <- df_tpm[,1]
 for(j in 1:ncol(df_tpm2)) df_tpm2[,j][is.na(df_tpm2[,j])] <- 0
-saveRDS(df_tpm2, paste0(path_tpm,'/stringtie.tpm.rds'))
-write.table(df_tpm2, paste0(path_tpm,"/stringtie.tpm.txt"),sep = "\t",col.names = T,row.names = T,quote = F)
+saveRDS(df_tpm2, paste0(path_stringtie,'/stringtie.tpm.rds'))
+write.table(df_tpm2, paste0(path_stringtie,"/stringtie.tpm.txt"),sep = "\t",col.names = T,row.names = T,quote = F)
 
 df_fpkm2 <- as.matrix(df_fpkm[,-1]); rownames(df_fpkm2) <- df_fpkm[,1]
 for(j in 1:ncol(df_fpkm2)) df_fpkm2[,j][is.na(df_fpkm2[,j])] <- 0
-saveRDS(df_fpkm2, paste0(path_fpkm,'/stringtie.fpkm.rds'))
-write.table(df_fpkm2, paste0(path_fpkm,"/stringtie.fpkm.txt"),sep = "\t",col.names = T,row.names = T,quote = F)
+saveRDS(df_fpkm2, paste0(path_stringtie,'/stringtie.fpkm.rds'))
+write.table(df_fpkm2, paste0(path_stringtie,"/stringtie.fpkm.txt"),sep = "\t",col.names = T,row.names = T,quote = F)
 
 # grobal options:
 options(scipen = 1)
