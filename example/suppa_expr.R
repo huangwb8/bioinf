@@ -1,8 +1,9 @@
 
-##==========================Input========================##
+##=========================Input========================##
 
 path_stringtie_res = '~/Project/RNA-Seq_A2B1-KO/output/stringtie/hisat2'
 path_suppa_res = '~/Project/RNA-Seq_A2B1-KO/output/suppa/stringtie/hisat2'
+
 
 # Sample & Group
 Group = list(
