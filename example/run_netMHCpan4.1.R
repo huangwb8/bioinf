@@ -15,6 +15,7 @@ pattern_excluded_fasta = c('_orphan', 'canonical')
 path_res = paste0(path_fasta,'/run_netMHCpan4.1'); dir.create(path_res, showWarnings = F, recursive = T)
 path_software='/home/huangwb8/Downloads/netMHCpan/4.1'
 MHC_species = 'HLA'
+mhc.selected_top <- "HLA-A0201"
 
 # HLA typing
 path_hla_type = '~/Project/RNA-Seq_A2B1-KO/input/HLA_TCGA-COAD.rds' # From TSNAdb. Please see: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6203688/
@@ -57,8 +58,14 @@ df.allele <- read.table(paste0(path_software,'/data/allelenames'), sep = ' ', st
 df.mhc <- df.allele[grepl(paste0(MHC_species,'-'), as.character(df.allele[,1])),]
 mhc.selected <- readRDS(path_hla_type); names(mhc.selected) <- gsub(':','',names(mhc.selected))
 df.mhc.selected <- df.mhc[Fastgrep(names(mhc.selected), df.mhc[,2]),] # table(duplicated(df.mhc.selected$V2))
+
+# MHC group
 mhc.selected <- unique(df.mhc.selected[,1])
-mhc.selected.list <- cut_vector(mhc.selected, nsplit = round(length(mhc.selected)/20))
+mhc.selected_res <-  setdiff(mhc.selected, mhc.selected_top)
+mhc.selected.list <- c(
+  'Top' = mhc.selected_top,
+  cut_vector(mhc.selected_res, nsplit = round(length(mhc.selected)/20))
+)
 
 # Run software
 for(i in 1:length(f)){ # i=1
