@@ -41,7 +41,8 @@ do
   else # 单端
   echo "${path_fastq}/${sample}: single data."
   echo "${path_fastq}/${sample}: do pigz..."
-  mv ${path_fastq}/${sample}.fastq ${path_fastq}/${case}.fastq
+  sampleCase=$(basename ${sample} .sra)
+  mv ${path_fastq}/${sampleCase}.fastq ${path_fastq}/${case}.fastq
   pigz -p ${nthread} ${path_fastq}/${case}.fastq
   echo "${path_fastq}/${sample}: done!"
   fi

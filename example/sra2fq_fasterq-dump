@@ -30,7 +30,7 @@ do
   touch ${path_log}/sra2fq_${case}.log
   ## -p show progress; -x print details; -3 writes single reads in special file;-N use row-id as name; -P print read-numbers; -f force to overwrite existing file(s)，这里不加;-e how many thread; --skip-technical skip technical reads
   echo "${path_sra}/${sample}: do fasterq-dump..."
-  nohup time fasterq-dump -p -x -3 -N -P --skip-technical -e ${nthread} ${path_sra}/${sample} -O ${path_fastq} > ${path_log}/sra2fq_fasterq-dump_${case}.log 2>&1 &
+  nohup time fasterq-dump -p -x -3 --skip-technical -e ${nthread} ${path_sra}/${sample} -O ${path_fastq} > ${path_log}/sra2fq_fasterq-dump_${case}.log 2>&1 &
   echo "${path_sra}/${sample}: done!"
   else 
   echo "${path_sra}/${sample} is not existed."

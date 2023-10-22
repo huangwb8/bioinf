@@ -28,7 +28,7 @@ do
   echo "${case}: fastq.gz data existed. Ignored."
   elif [ -f ${path_sra}/${sample} ]; then
   ## -p show progress; -x print details; -3 writes single reads in special file;-N use row-id as name; -P print read-numbers; -f force to overwrite existing file(s)，这里不加;-e how many thread; --skip-technical skip technical reads
-  time fasterq-dump -p -x -3 -N -P --skip-technical -e ${nthread} ${path_sra}/${sample} -O ${path_fastq} > ${path_log}/sra2fq_${case}.log 2>&1
+  time fasterq-dump -p -x -3 --skip-technical -e ${nthread} ${path_sra}/${sample} -O ${path_fastq} > ${path_log}/sra2fq_${case}.log 2>&1
   else
   echo "${path_sra}/${sample} dosen't existed.Please check it."
   fi
