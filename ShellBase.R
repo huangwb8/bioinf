@@ -60,36 +60,37 @@ Plus.library <- function(packages){
 
 
 ## ?lucky::LuckyVerbose
-LuckyVerbose <- function(..., 
-                         levels = 1, 
-                         type = NULL){
-  if (is.null(type)) {
-    if (levels == 1) {
-      type <- "message"
-    }
-    else {
-      type <- "cat"
+LuckyVerbose <- function(...,levels = 1,type = NULL, show.sys.time = T){
+  ## Verbose type
+  if(is.null(type)){
+    if(levels == 1){
+      type <-  "message"
+    } else {
+      type <-  "cat"
     }
   }
-  if (levels > 1) {
-    s1 <- paste(rep(" ", (levels - 1)), collapse = "")
-    s2 <- paste(rep("o", (levels - 1)), collapse = "")
-    ls <- paste(s1, s2, collapse = "")
-  }
-  else {
+
+  ## level symbol
+  if(levels > 1){
+    ls <- paste(rep("o",(levels-1)),collapse = "")
+  } else {
     ls <- ""
   }
-  if (type == "message") {
-    return(base::message(ls, " ", ...))
+
+  ## System time
+  if(show.sys.time){
+    ls <- paste0(as.character(format(Sys.time(), "%Y-%m-%d %H:%M:%S")),' | ', ls)
   }
-  else {
-    if (type == "cat") {
-      return(base::cat(ls, ..., "\n"))
-    }
-    else {
-      print("Input right type.")
-    }
+
+  ## do Verbose
+  if(type == "message"){
+    return(base::message(ls,...))
+  } else if(type == "cat") {
+    return(base::cat(ls,...,"\n"))
+  } else {
+    print("Please input right type.")
   }
+
 }
 
 ## ?lucky::cut_vector
