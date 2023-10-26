@@ -1,5 +1,4 @@
 
-
 #============Information
 # Version: 0.0.1
 # Author: Weibin Huang
@@ -49,6 +48,7 @@ library(optparse);
 fastq_downloader <- function(path_fastq, url, method){
   url_base = basename(url)
   if(method == 'aspera'){
+    # https://www.cnblogs.com/huanping/p/14308007.html
     url_e = paste0('~/.aspera/connect/bin/ascp -l 1000M -P 33001 -QT -k 1 -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh era-fasp@', url, ' ', path_fastq,'/',url_base)
   } else if(method == 'wget'){
     url_e = paste0('wget -c -o ',path_fastq,'/wget_', url_base, '.log -T 120 -t inf --directory-prefix=',path_fastq,' ', url)
@@ -108,9 +108,6 @@ system(curl_e)
 
 # Get URLs
 df <- read.table(file_report, sep = '\t', header = T, check.names = F)
-
-# Download via Aspera
-# [Aspera下载安装使用 - 何物昂 - 博客园](https://www.cnblogs.com/huanping/p/14308007.html)
 
 # Download
 LuckyVerbose(accession, ': Use ',method,' method! ')
