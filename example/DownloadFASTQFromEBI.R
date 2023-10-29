@@ -1,6 +1,7 @@
 
+
 #============Information
-# Version: 0.0.1
+# Version: 0.0.2
 # Author: Weibin Huang
 
 #============Usage
@@ -46,16 +47,42 @@ library(optparse);
 # Function: downloader
 # wget, aspera
 fastq_downloader <- function(path_fastq, url, method){
+  
+  # url = "fasp.sra.ebi.ac.uk:/vol1/fastq/SRR138/028/SRR13816328/SRR13816328.fastq.gz"
   url_base = basename(url)
-  if(method == 'aspera'){
-    # https://www.cnblogs.com/huanping/p/14308007.html
-    url_e = paste0('~/.aspera/connect/bin/ascp -l 1000M -P 33001 -QT -k 1 -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh era-fasp@', url, ' ', path_fastq,'/',url_base)
-  } else if(method == 'wget'){
-    url_e = paste0('wget -c -o ',path_fastq,'/wget_', url_base, '.log -T 120 -t inf --directory-prefix=',path_fastq,' ', url)
-  } else {
-    url_e <- NULL
+  
+  exit_code <- -1
+  
+  # Download fastq.gz
+  repeat {
+    
+    if(method == 'aspera'){
+      # ~/.aspera/connect/bin/ascp -l 1000M -P 33001 -QT -k 2 -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh era-fasp@fasp.sra.ebi.ac.uk:/vol1/fastq/SRR138/028/SRR13816328/SRR13816328.fastq.gz ./test.fq.gz
+      url_e = paste0('~/.aspera/connect/bin/ascp -l 1000M -P 33001 -QT -k 1 -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh era-fasp@', url, ' ', path_fastq,'/',url_base)
+    } else if(method == 'wget'){
+      url_e = paste0('wget -c -o ',path_fastq,'/wget_', url_base, '.log -T 120 -t inf --directory-prefix=',path_fastq,' ', url)
+    } else {
+      url_e <- NULL
+    }
+    
+    # Download
+    LuckyVerbose(accession, ': Downloading ', url,'...')
+    system(url_e, wait = TRUE)
+    
+    # Get exit code
+    exit_code <- system("echo $?", intern = TRUE)
+    exit_code <- as.integer(exit_code)
+    
+    # Success or failure behavior
+    if (exit_code == 0) {
+      # Game over
+      LuckyVerbose(accession, ": ",url,' completed!')
+      break
+    } else {
+      # Another repeat after 120s
+      Sys.sleep(120)
+    }
   }
-  return(url_e)
 }
 
 #============Parameters
@@ -109,20 +136,16 @@ system(curl_e)
 # Get URLs
 df <- read.table(file_report, sep = '\t', header = T, check.names = F)
 
+# Download via Aspera
+# [Aspera下载安装使用 - 何物昂 - 博客园](https://www.cnblogs.com/huanping/p/14308007.html)
+
 # Download
 LuckyVerbose(accession, ': Use ',method,' method! ')
 fq_urls <- as.character(df$fastq_aspera)
 for(urlP in fq_urls){
   # urlP = "fasp.sra.ebi.ac.uk:/vol1/fastq/SRR588/002/SRR5885322/SRR5885322_1.fastq.gz;fasp.sra.ebi.ac.uk:/vol1/fastq/SRR588/002/SRR5885322/SRR5885322_2.fastq.gz"
   urls <- Fastextra(urlP, ';')
-  for(url in urls){
-    # url = "fasp.sra.ebi.ac.uk:/vol1/fastq/SRR138/028/SRR13816328/SRR13816328.fastq.gz"
-    LuckyVerbose(accession, ': Downloading ', url,'...')
-    #  ~/.aspera/connect/bin/ascp -l 1000M -P 33001 -QT -k 2 -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh era-fasp@fasp.sra.ebi.ac.uk:/vol1/fastq/SRR138/028/SRR13816328/SRR13816328.fastq.gz ./test.fq.gz
-    url_e = fastq_downloader(path_fastq, url, method)
-    system(url_e)
-    LuckyVerbose(accession, ": ",url,' completed!')
-  }
+  for(url in urls) fastq_downloader(path_fastq, url, method)
 }
 
 # Game over
