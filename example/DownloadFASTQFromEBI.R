@@ -1,7 +1,7 @@
 
 
 #============Information
-# Version: 0.0.2
+# Version: 0.1.1
 # Author: Weibin Huang
 
 #============Usage
@@ -49,6 +49,7 @@ library(optparse);
 fastq_downloader <- function(path_fastq, url, method){
   
   # url = "fasp.sra.ebi.ac.uk:/vol1/fastq/SRR138/028/SRR13816328/SRR13816328.fastq.gz"
+  LuckyVerbose(accession, ': Downloading ', url,'...')
   url_base = basename(url)
   
   exit_code <- -1
@@ -66,7 +67,6 @@ fastq_downloader <- function(path_fastq, url, method){
     }
     
     # Download
-    LuckyVerbose(accession, ': Downloading ', url,'...')
     system(url_e, wait = TRUE)
     
     # Get exit code
@@ -81,6 +81,7 @@ fastq_downloader <- function(path_fastq, url, method){
     } else {
       # Another repeat after 120s
       Sys.sleep(120)
+      LuckyVerbose(accession, ': Repeat Downloading ', url_base ,'...')
     }
   }
 }
