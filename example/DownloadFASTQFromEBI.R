@@ -136,9 +136,6 @@ system(curl_e)
 # Get URLs
 df <- read.table(file_report, sep = '\t', header = T, check.names = F)
 
-# Download via Aspera
-# [Aspera下载安装使用 - 何物昂 - 博客园](https://www.cnblogs.com/huanping/p/14308007.html)
-
 # Download
 LuckyVerbose(accession, ': Use ',method,' method! ')
 fq_urls <- as.character(df$fastq_aspera)
