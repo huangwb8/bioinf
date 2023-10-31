@@ -1,7 +1,7 @@
 
 
 #============Information
-# Version: 0.1.1
+# Version: 0.1.2
 # Author: Weibin Huang
 
 #============Usage
@@ -59,7 +59,7 @@ fastq_downloader <- function(path_fastq, url, method){
     
     if(method == 'aspera'){
       # ~/.aspera/connect/bin/ascp -l 1000M -P 33001 -QT -k 2 -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh era-fasp@fasp.sra.ebi.ac.uk:/vol1/fastq/SRR138/028/SRR13816328/SRR13816328.fastq.gz ./test.fq.gz
-      url_e = paste0('~/.aspera/connect/bin/ascp -l 1000M -P 33001 -QT -k 1 -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh era-fasp@', url, ' ', path_fastq,'/',url_base)
+      url_e = paste0('~/.aspera/connect/bin/ascp -l 1000M -P 33001 -QT -k 2 -i ~/.aspera/connect/etc/asperaweb_id_dsa.openssh era-fasp@', url, ' ', path_fastq,'/',url_base)
     } else if(method == 'wget'){
       url_e = paste0('wget -c -o ',path_fastq,'/wget_', url_base, '.log -T 120 -t inf --directory-prefix=',path_fastq,' ', url)
     } else {
@@ -123,7 +123,7 @@ dir.create(path_project, showWarnings = F, recursive = T)
 dir.create(path_fastq, showWarnings = F, recursive = T)
 
 # Download filereport file
-file_report <- paste0(path_project, '/', 'filereport_read_run_',accession, '.tsv')
+file_report <- paste0(path_fastq, '/', 'filereport_read_run_',accession, '.tsv')
 # if(!file.exists(file_report)){
 #   LuckyVerbose(accession, ': Downloading filereport file completed!')
 # } else {
@@ -131,7 +131,7 @@ file_report <- paste0(path_project, '/', 'filereport_read_run_',accession, '.tsv
 # }
 LuckyVerbose(accession, ': Downloading filereport file...')
 # curl_download(paste0('https://www.ebi.ac.uk/ena/portal/api/filereport?accession=',accession,'&result=read_run&fields=study_accession,sample_accession,experiment_accession,run_accession,tax_id,scientific_name,fastq_ftp,fastq_aspera,submitted_ftp,sra_ftp,bam_ftp&format=tsv&download=true&limit=0'), paste0(path_project, '/', 'filereport_read_run_',accession, '.tsv'), quiet = TRUE,  mode = "wb")
-curl_e <- paste0('curl -C - -o ', path_fastq, '/', 'filereport_read_run_',accession, '.tsv ', "'https://www.ebi.ac.uk/ena/portal/api/filereport?accession=",accession,"&result=read_run&fields=study_accession,sample_accession,experiment_accession,run_accession,tax_id,scientific_name,fastq_ftp,fastq_aspera,submitted_ftp,sra_ftp,bam_ftp&format=tsv&download=true&limit=0'")
+curl_e <- paste0('curl -C - -o ', file_report,' ', "'https://www.ebi.ac.uk/ena/portal/api/filereport?accession=",accession,"&result=read_run&fields=study_accession,sample_accession,experiment_accession,run_accession,tax_id,scientific_name,fastq_ftp,fastq_aspera,submitted_ftp,sra_ftp,bam_ftp&format=tsv&download=true&limit=0'")
 system(curl_e)
 
 # Get URLs
