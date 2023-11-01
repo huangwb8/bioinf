@@ -1,18 +1,37 @@
 
 
+##=====================Information========================##
+# Version: 0.1.0
+# Author: Weibin Huang
+# Merge samples' stringtie results into an TPM expression matrix and output the matrix as *.txt and *.rds.
 
-##==========================Input========================##
-# path_stringtie='/home/huangwb8/Project/RNA-Seq_A2B1-KO/output/stringtie/hisat2'
+
+##========================Usage===========================##
+# Rscript ~/bin/example/mergeStringtieTPM.R --help
+# nohup Rscript ~/bin/example/mergeStringtieTPM.R --path_stringtie ${path_res}> ${path_log}/mergeStringtieTPM.log 2>&1 &
+
 
 ##==============assistant base function=================##
 source("/home/huangwb8/bin/ShellBase.R",encoding = "UTF-8")
 
 ##====================environment=======================##
-nd.pac=c("dplyr","plyr","readr")
+nd.pac=c("dplyr","plyr","readr","optparse")
 Plus.library(nd.pac)
 
 # grobal options:
 options(scipen = 100)
+
+# Define Shell parameters
+# path_stringtie='~/Project/RNA-Seq_A2B1-KO/output/stringtie/hisat2'
+option_list <- list(
+	make_option(c("-p", "--path_stringtie"), type = "character", default = NULL, help = "The path of stringtie output.")
+)
+
+# Shell to R
+opt <- parse_args(OptionParser(option_list = option_list))
+
+# R parameters
+path_stringtie = opt$path_stringtie
 
 ##===========================Programe====================##
 
@@ -98,3 +117,4 @@ write.table(df_fpkm2, paste0(path_stringtie,"/stringtie.fpkm.txt"),sep = "\t",co
 
 # grobal options:
 options(scipen = 1)
+
