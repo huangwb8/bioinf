@@ -1,7 +1,7 @@
 
 
 #============Information
-# Version: 0.1.10
+# Version: 0.1.11
 # Author: Weibin Huang
 # Download fastq.gz (if any) from https://www.ebi.ac.uk/ena after giving an accession ID like PRJEB402. Support single/pair data.
 
@@ -88,8 +88,9 @@ fastq_downloader <- function(path_fastq, url, method, losse_check){
       error_msg <- as.character(unlist(result))
       is_repeat <- is.one.true(grepl("Error|Partial|Fail", error_msg, ignore.case = T))
       if(is_repeat){
+        print(result)
         LuckyVerbose(accession, ": ascp encountered an error. Retrying...")
-        Sys.sleep(120) # Another repeat after 120s
+        Sys.sleep(sample(120:300, 1)) # Another repeat after 120s
       } else {
         LuckyVerbose(accession, ": ",url_base,"'s ascp result: ")
         print(result)
