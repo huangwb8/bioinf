@@ -1,7 +1,7 @@
 
 
 #============Information
-# Version: 0.1.12
+# Version: 0.1.13
 # Author: Weibin Huang
 # Download fastq.gz (if any) from https://www.ebi.ac.uk/ena after giving an accession ID like PRJEB402. Support single/pair data.
 
@@ -19,31 +19,7 @@
 
 source("/home/huangwb8/bin/ShellBase.R",encoding = "UTF-8")
 
-# Package
-# if(F){
-#   # Install "devtools" package
-#   if (!requireNamespace("devtools", quietly = TRUE))
-#     install.packages("devtools")
-#   
-#   # Install dependencies
-#   if (!requireNamespace("luckyBase", quietly = TRUE))
-#     devtools::install_github("huangwb8/luckyBase")
-#   
-#   # Load packages
-#   library(luckyBase)
-#   np <- c('curl','optparse'); Plus.library(np)
-#   
-# }
-
-# Install dependencies
-# if (!requireNamespace("curl", quietly = TRUE))
-#   install.packages("curl")
-# library(curl); 
-
-if (!requireNamespace("optparse", quietly = TRUE))
-  install.packages("optparse")
-library(optparse);
-
+Plus.library(c("optparse"))
 
 # Function: downloader
 # wget, aspera
