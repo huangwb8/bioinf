@@ -1,7 +1,7 @@
 
 
 #============Information
-# Version: 0.1.11
+# Version: 0.1.12
 # Author: Weibin Huang
 # Download fastq.gz (if any) from https://www.ebi.ac.uk/ena after giving an accession ID like PRJEB402. Support single/pair data.
 
@@ -146,15 +146,14 @@ dir.create(path_fastq, showWarnings = F, recursive = T)
 
 # Download filereport file
 file_report <- paste0(path_fastq, '/', 'filereport_read_run_',accession, '.tsv')
-# if(!file.exists(file_report)){
-#   LuckyVerbose(accession, ': Downloading filereport file completed!')
-# } else {
-#   LuckyVerbose(accession, ': Filereport file exist. Ignore!')
-# }
-LuckyVerbose(accession, ': Downloading filereport file...')
-# curl_download(paste0('https://www.ebi.ac.uk/ena/portal/api/filereport?accession=',accession,'&result=read_run&fields=study_accession,sample_accession,experiment_accession,run_accession,tax_id,scientific_name,fastq_ftp,fastq_aspera,submitted_ftp,sra_ftp,bam_ftp&format=tsv&download=true&limit=0'), paste0(path_project, '/', 'filereport_read_run_',accession, '.tsv'), quiet = TRUE,  mode = "wb")
-curl_e <- paste0('curl -C - -o ', file_report,' ', "'https://www.ebi.ac.uk/ena/portal/api/filereport?accession=",accession,"&result=read_run&fields=study_accession,sample_accession,experiment_accession,run_accession,tax_id,scientific_name,fastq_ftp,fastq_aspera,submitted_ftp,sra_ftp,bam_ftp&format=tsv&download=true&limit=0'")
-system(curl_e)
+if(!file.exists(file_report)){
+  LuckyVerbose(accession, ': Downloading filereport file...')
+  curl_e <- paste0('curl -C - -o ', file_report,' ', "'https://www.ebi.ac.uk/ena/portal/api/filereport?accession=",accession,"&result=read_run&fields=study_accession,sample_accession,experiment_accession,run_accession,tax_id,scientific_name,fastq_ftp,fastq_aspera,submitted_ftp,sra_ftp,bam_ftp&format=tsv&download=true&limit=0'")
+  system(curl_e)
+  LuckyVerbose(accession, ': Downloading filereport file completed!')
+} else {
+  LuckyVerbose(accession, ': Filereport file exist. Ignore!')
+}
 
 # Get URLs
 df <- read.table(file_report, sep = '\t', header = T, check.names = F)
