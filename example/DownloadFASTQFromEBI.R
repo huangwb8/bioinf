@@ -3,6 +3,7 @@
 #============Information
 # Version: 0.1.10
 # Author: Weibin Huang
+# Download fastq.gz (if any) from https://www.ebi.ac.uk/ena after giving an accession ID like PRJEB402. Support single/pair data.
 
 #============Usage
 # In Shell:
