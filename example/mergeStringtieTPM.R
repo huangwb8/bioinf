@@ -9,7 +9,30 @@
 ##========================Usage===========================##
 # Rscript ~/bin/example/mergeStringtieTPM.R --help
 # nohup Rscript ~/bin/example/mergeStringtieTPM.R --path_stringtie ${path_res}> ${path_log}/mergeStringtieTPM.log 2>&1 &
+ 
+# tree -L 2 ${path_res} is like: 
 
+# ├── SRR11873614.Aligned.sortedByCoord.out
+# │   ├── cov_refs.gtf
+# │   ├── e2t.ctab
+# │   ├── e_data.ctab
+# │   ├── gene_abund.tab
+# │   ├── i2t.ctab
+# │   ├── i_data.ctab
+# │   ├── merged.gtf
+# │   └── t_data.ctab
+# ├── SRR11873614.Aligned.sortedByCoord.out.transcript.tpm.tab
+# ├── SRR11873615.Aligned.sortedByCoord.out
+# │   ├── cov_refs.gtf
+# │   ├── e2t.ctab
+# │   ├── e_data.ctab
+# │   ├── gene_abund.tab
+# │   ├── i2t.ctab
+# │   ├── i_data.ctab
+# │   ├── merged.gtf
+# │   └── t_data.ctab
+# ├── SRR11873615.Aligned.sortedByCoord.out.transcript.tpm.tab
+# ...
 
 ##==============assistant base function=================##
 source("/home/huangwb8/bin/ShellBase.R",encoding = "UTF-8")
