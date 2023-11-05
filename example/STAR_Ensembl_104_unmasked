@@ -34,7 +34,7 @@ cat $path_sra2fq_txt | while read id ; do
     fq2=$path_fastq/${case}${fq_postfix}2.fastq.gz
     fq=$path_fastq/${case}.fastq.gz   
  
-    if [ -f $path_align/${case}Aligned.sortedByCoord.out.bam ]; then
+    if [ -f $path_align/${case}.Aligned.sortedByCoord.out.bam ]; then
     	echo "${case}: STAR results had existed. Ignore!"
     elif [ -f $fq1 -a -f $fq2 ]; then
         echo `date`" ${case}:paired reads data.do STAR analysis..."
