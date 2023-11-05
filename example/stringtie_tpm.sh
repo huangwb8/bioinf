@@ -1,9 +1,16 @@
 
+##=====================Information========================##
+# Version: 0.0.1
+# Author: Weibin Huang
+# Get TPM/FPKM of genes and transcripts
 
 
+##========================Usage===========================##
+# nohup bash ~/bin/example/stringtie_tpm.sh $ws > $ws/log/STAR_Ensembl_104_unmasked-stringtie_tpm.log 2>&1 &
+# tail -f $path_log/mergeStringtieTPM.log
+
+##========================Parameters======================##
 ws=$1
-
-# Parameters
 path_res=$ws/output/stringtie/STAR_Ensembl_104_unmasked
 path_gtf=/data/reference/Ensembl/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38.104.gtf
 path_log=$ws/log/stringtie/STAR_Ensembl_104_unmasked
@@ -14,7 +21,7 @@ mkdir -p $path_res $path_log
 
 # Programe: 不需要预测新型转录本
 
-##================Get TPM/FPKM of genes and transcripts=================##
+##========================Program======================##
 
 # --fr	Assumes a stranded library fr-secondstrand.
 # -e Limits the processing of read alignments to only estimate and output the assembled transcripts matching the reference transcripts given with the -G option (requires -G, recommended for -B/-b). 
