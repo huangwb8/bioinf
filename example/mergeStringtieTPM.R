@@ -1,9 +1,9 @@
 
 
 ##=====================Information========================##
-# Version: 0.1.0
+# Version: 0.1.3
 # Author: Weibin Huang
-# Merge samples' stringtie results into an TPM expression matrix and output the matrix as *.txt and *.rds.
+# Merge samples' stringtie results into an TPM/FPKM expression matrix and output the matrix as *.txt and *.rds.
 
 
 ##========================Usage===========================##
@@ -62,18 +62,20 @@ f <- list.files(path_stringtie,pattern = 'gene_abund.tab',full.names = T,recursi
 
 df_tpm <- NULL; df_fpkm <- NULL
 for(i in 1:length(f)){ # i=1
-  
+
   f.i <- f[i]
   n.i <- rev(Fastextra(f.i,'[/]'))[2]
   df.i <- read.table(f.i,header = T,check.names = F,sep = '\t')
-  
+  a3_path = paste0(Fastextra(f.i,n.i,1),n.i,'.transcript.tpm.tab')
+
   gene.i <- Fastextra(df.i$`Gene ID`, '[.]',1)
   # table(duplicated(gene.i))
   # gene.i[duplicated(gene.i)]
   tpm.i <- tapply(df.i[,'TPM'], gene.i, sum)
   fpkm.i <- tapply(df.i[,'FPKM'], gene.i, sum)
   
-  # TPM
+  # 01. TPM
+  LuckyVerbose('mergeStringtieTPM: Get TPM from ', n.i,'...')
   df.i2 <- data.frame(Gene_ID = names(tpm.i), TPM = tpm.i, stringsAsFactors = F,row.names = 1:length(tpm.i))
   colnames(df.i2)[2] <- n.i
   if(is.null(df_tpm)){
@@ -82,8 +84,8 @@ for(i in 1:length(f)){ # i=1
     df_tpm <- full_join(df_tpm,df.i2,by = "Gene_ID")
   }
   
-  
-  # FPKM
+  # 02. FPKM
+  LuckyVerbose('mergeStringtieTPM: Get FPKM from ', n.i,'...')
   df.i3 <- data.frame(Gene_ID = names(fpkm.i), FPKM = fpkm.i, stringsAsFactors = F,row.names = 1:length(fpkm.i))
   colnames(df.i3)[2] <- n.i
   if(is.null(df_fpkm)){
@@ -91,14 +93,14 @@ for(i in 1:length(f)){ # i=1
   } else {
     df_fpkm <- full_join(df_fpkm,df.i3,by = "Gene_ID")
   }
-  
-  
-  # TPM for SUPPA
-  # df.i2.m <- df.i2[-1]; rownames(df.i2.m) <- df.i2[,1]
-  # write.table(df.i2.m, paste0(Fastextra(f.i,n.i,1),n.i,'.tpm.tab'),sep = "\t",col.names = T,row.names = T,quote = F)
-  if(T){
-    
-    x <- readr::read_delim(paste0(path_stringtie,'/',n.i,'/merged.gtf'), delim = '\t', comment = "#",col_names = F) %>% as.data.frame()
+
+  # 03. TPM for SUPPA
+  if(!file.exists(a3_path)){
+
+    # df.i2.m <- df.i2[-1]; rownames(df.i2.m) <- df.i2[,1]
+    # write.table(df.i2.m, paste0(Fastextra(f.i,n.i,1),n.i,'.tpm.tab'),sep = "\t",col.names = T,row.names = T,quote = F)
+    LuckyVerbose('mergeStringtieTPM: Get TPM for SUPPA from ', n.i,'...')
+    x <- readr::read_delim(paste0(path_stringtie,'/',n.i,'/merged.gtf'), delim = '\t', comment = "#",col_names = F, show_col_types = FALSE) %>% as.data.frame()
     x2 <- x[x[,3] == 'transcript',]
     
     a <- apply(as.matrix(x2[,9]), 1, function(i){
@@ -119,7 +121,9 @@ for(i in 1:length(f)){ # i=1
     # a3 <- na.omit(a3) # table(is.na(a3$D1)); a3[is.na(a3$D1),]
 
     # Output
-    write.table(a3, paste0(Fastextra(f.i,n.i,1),n.i,'.transcript.tpm.tab'),sep = "\t",col.names = T,row.names = T,quote = F)
+    write.table(a3, a3_path,sep = "\t",col.names = T,row.names = T,quote = F)
+  } else {
+    LuckyVerbose('mergeStringtieTPM: TPM for SUPPA of ', n.i,'exists. Ignored!')
   }
   
 }
@@ -128,6 +132,7 @@ for(i in 1:length(f)){ # i=1
 # table(duplicated(df_fpkm$Gene_ID))
 
 # Output
+LuckyVerbose('mergeStringtieTPM: merge all results...')
 df_tpm2 <- as.matrix(df_tpm[,-1]); rownames(df_tpm2) <- df_tpm[,1]
 for(j in 1:ncol(df_tpm2)) df_tpm2[,j][is.na(df_tpm2[,j])] <- 0
 saveRDS(df_tpm2, paste0(path_stringtie,'/stringtie.tpm.rds'))
@@ -139,5 +144,5 @@ saveRDS(df_fpkm2, paste0(path_stringtie,'/stringtie.fpkm.rds'))
 write.table(df_fpkm2, paste0(path_stringtie,"/stringtie.fpkm.txt"),sep = "\t",col.names = T,row.names = T,quote = F)
 
 # grobal options:
+LuckyVerbose('mergeStringtieTPM: All done!')
 options(scipen = 1)
-

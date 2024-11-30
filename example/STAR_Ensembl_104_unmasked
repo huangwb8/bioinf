@@ -5,7 +5,7 @@
 
 ## Parameters
 ws=$1
-index_base=/data/reference/Ensembl/release-104/fasta/homo_sapiens/dna/um.primary_assembly/STAR # 注意这不是文件路径而是文件前缀
+index_base=/data/reference/Ensembl/release-104/fasta/homo_sapiens/dna/um.primary_assembly/STAR # 注意这不是文件路径而是文件前缀。STAR version: 2.7.9a。
 path_sra2fq_txt=${ws}/input/case/sra2case.txt
 path_fastq=${ws}/output/fastq
 path_log=${ws}/log/star_ensembl_104_unmasked
@@ -17,6 +17,7 @@ fq_postfix=_
 sjdbOverhang=100
 nthread=45
 raw_ulimit=$(ulimit -n); ulimit -n 10000 # default is 1024, which is not enough for STAR analysis
+max_memory=67645734912 # 67645734912 bytes = 63G
 
 ## Usage
 # nohup star_hg38 $ws > $ws/log/star_hg38.log 2>&1 &
@@ -37,7 +38,7 @@ cat $path_sra2fq_txt | while read id ; do
     if [ -f $path_align/${case}.Aligned.sortedByCoord.out.bam ]; then
     	echo "${case}: STAR results had existed. Ignore!"
     elif [ -f $fq1 -a -f $fq2 ]; then
-        echo `date`" ${case}:paired reads data.do STAR analysis..."
+        echo `date`" ${case}:paired reads data. do STAR analysis..."
         # hisat2: -t 输出时间；-p 线程数；-x index前缀；-1/-2 fq文件 -S 输出sam文件;--rg-id 设置read group id. @RG对于下一步的GATK碱基质量重校正BQSR最佳实践是需要的。
         STAR \
             --runThreadN ${nthread} \
@@ -48,6 +49,8 @@ cat $path_sra2fq_txt | while read id ; do
             --sjdbOverhang ${sjdbOverhang} \
             --outSAMattrRGline ID:${case} SM:${case} LB:${seq_type} PL:Illumina \
             --outFileNamePrefix ${path_align}/${case}. \
+            --outBAMsortingBinsN 200 \
+            --limitBAMsortRAM ${max_memory} \
             --outSAMtype BAM SortedByCoordinate \
             --twopassMode Basic \
             > $path_log/STAR_hg38_paired_${case}.log 2>&1
@@ -58,7 +61,7 @@ cat $path_sra2fq_txt | while read id ; do
         samtools index ${path_bam}
     
     else
-        echo `date`" ${case}:unpaired reads data.do STAR analysis..."
+        echo `date`" ${case}:unpaired reads data. do STAR analysis..."
         STAR \
             --runThreadN ${nthread} \
             --genomeDir ${index_base} \
@@ -68,18 +71,21 @@ cat $path_sra2fq_txt | while read id ; do
             --sjdbOverhang ${sjdbOverhang} \
             --outSAMattrRGline ID:${case} SM:${case} LB:${seq_type} PL:Illumina \
             --outFileNamePrefix ${path_align}/${case}. \
+            --outBAMsortingBinsN 200 \
+            --limitBAMsortRAM ${max_memory} \
             --outSAMtype BAM SortedByCoordinate \
             --twopassMode Basic \
             > $path_log/STAR_hg38_unpaired_${case}.log 2>&1
             # tail -f $path_log/STAR_hg38_unpaired_${case}.log
             
-        echo `date`" ${case}:STAR done!"
+        echo `date`" ${case}: STAR done!"
 
         ## index
         path_bam=${path_align}/${case}.Aligned.sortedByCoord.out.bam
         samtools index -@ $nthread ${path_bam}
     fi
-done    
+done 
+
 ## default ulimit
 ulimit -n ${raw_ulimit}
 

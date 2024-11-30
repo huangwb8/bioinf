@@ -1,6 +1,6 @@
 
 ##=====================Information========================##
-# Version: 0.0.1
+# Version: 0.0.2
 # Author: Weibin Huang
 # Get TPM/FPKM of genes and transcripts
 
@@ -14,10 +14,17 @@ ws=$1
 path_res=$ws/output/stringtie/STAR_Ensembl_104_unmasked
 path_gtf=/data/reference/Ensembl/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38.104.gtf
 path_log=$ws/log/stringtie/STAR_Ensembl_104_unmasked
-prepDE=/home/huangwb8/Downloads/stringtie/stringtie-2.1.6/prepDE.py
+path_stringtie=/home/huangwb8/Downloads/stringtie/stringtie-2.1.6
+nthread=45
 
 # Dir management
 mkdir -p $path_res $path_log 
+
+ls $ws/output/align/STAR_ensembl_104_unmasked/*bam | while read id
+do
+    name=$(basename ${id} .bam)
+    touch ${path_log}/${name}.log
+done
 
 # Programe: 不需要预测新型转录本
 
@@ -34,16 +41,16 @@ do
     
     if [ -f ${path_res}/${name}/gene_abund.tab ]
     then
-    echo `date`" ${path_res}/${sample}: stringtie data exists. Ignore!"
+        echo `date`" ${path_res}/${name}: stringtie data exists. Ignore!"
     else
-    echo `date`" ${path_res}/${sample}: run stringtie..."
-    nohup stringtie ${id} -e -v \
-        -A ${path_res}/${name}/gene_abund.tab \
-        -C ${path_res}/${name}/cov_refs.gtf \
-        -B -p 10 \
-        -G ${path_gtf} \
-        -o ${path_res}/${name}/merged.gtf --fr \
-        > ${path_log}/${name}.log 2>&1 &
+        echo `date`" ${path_res}/${name}: run stringtie..."
+        ${path_stringtie}/stringtie ${id} -e -v \
+            -A ${path_res}/${name}/gene_abund.tab \
+            -C ${path_res}/${name}/cov_refs.gtf \
+            -B -p ${nthread} \
+            -G ${path_gtf} \
+            -o ${path_res}/${name}/merged.gtf --fr \
+            > ${path_log}/${name}.log 2>&1
     fi
 done
 
